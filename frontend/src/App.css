@@ -99,6 +99,13 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.pill-button:disabled,
+.ghost-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  box-shadow: none;
+}
+
 .primary-button {
   background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
   color: #ffffff;
@@ -157,6 +164,10 @@
   gap: 1.5rem;
 }
 
+.manual-form[aria-busy='true'] {
+  opacity: 0.75;
+}
+
 .manual-form__header h2 {
   margin: 0;
   font-size: 1.4rem;
@@ -172,6 +183,19 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.25rem;
+}
+
+.loading-state {
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-panel);
+  color: var(--color-muted);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .modal-backdrop {
@@ -193,6 +217,60 @@
   box-shadow: 0 32px 60px -28px rgba(234, 88, 12, 0.35);
   padding: 2rem;
   border: 1px solid var(--color-accent-soft);
+}
+
+.danger-button {
+  background: rgba(248, 113, 113, 0.2);
+  color: #7f1d1d;
+  box-shadow: none;
+}
+
+.danger-button:hover {
+  transform: translateY(-1px);
+  box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.45);
+}
+
+.danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.feedback-banner {
+  background: rgba(254, 226, 226, 0.9);
+  border: 1px solid rgba(248, 113, 113, 0.55);
+  border-radius: 18px;
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-panel);
+  color: #7f1d1d;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.feedback-banner__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.feedback-banner__content h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.feedback-banner__content p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.feedback-banner__dismiss {
+  align-self: center;
+  white-space: nowrap;
 }
 
 .modal--jobs {
@@ -385,6 +463,7 @@
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .modal__actions--center {

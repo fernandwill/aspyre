@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { JOBS_PER_MODAL_PAGE, STATUSES } from '../lib/jobBoard'
-import { generateId, normalizeLink } from '../lib/jobUtils'
+import { normalizeLink } from '../lib/jobUtils'
+import {
+  createJobApplication,
+  deleteJobApplication,
+  listJobApplications,
+  updateJobApplication,
+  updateJobStatus as updateJobStatusRequest,
+} from '../lib/api'
 
 const EMPTY_MANUAL_JOB = { title: '', company: '', location: '', link: '', notes: '' }
 const EMPTY_EDIT_FORM = { title: '', company: '', location: '', link: '', notes: '' }
@@ -14,7 +21,7 @@ function hasEditChanges(editForm, job) {
   const sanitizedCompany = editForm.company.trim()
   const sanitizedLocation = editForm.location.trim()
   const sanitizedNotes = editForm.notes.trim()
-  const normalizedLink = normalizeLink(editForm.link)
+  const normalizedEditLink = normalizeLink(editForm.link)
 
   const originalTitle = (job.title ?? '').trim()
   const originalCompany = (job.company ?? '').trim()
@@ -26,13 +33,13 @@ function hasEditChanges(editForm, job) {
   const companyChanged = sanitizedCompany ? sanitizedCompany !== originalCompany : false
   const locationChanged = sanitizedLocation ? sanitizedLocation !== originalLocation : false
   const notesChanged = sanitizedNotes !== originalNotes
-  const linkChanged = normalizedLink !== originalLink
+  const linkChanged = normalizedEditLink !== originalLink
 
   return titleChanged || companyChanged || locationChanged || notesChanged || linkChanged
 }
 
 export function useJobBoard(initialJobs = []) {
-  const [jobs, setJobs] = useState(initialJobs)
+  const [jobs, setJobs] = useState(() => (Array.isArray(initialJobs) ? initialJobs : []))
   const [manualJob, setManualJob] = useState(EMPTY_MANUAL_JOB)
   const [draggedJobId, setDraggedJobId] = useState(null)
   const [activeDropStatus, setActiveDropStatus] = useState(null)
@@ -41,6 +48,54 @@ export function useJobBoard(initialJobs = []) {
   const [successMessage, setSuccessMessage] = useState(null)
   const [expandedStatus, setExpandedStatus] = useState(null)
   const [expandedPage, setExpandedPage] = useState(1)
+  const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState(null)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
+  const fetchJobs = useCallback(async () => {
+    if (!isMountedRef.current) {
+      return
+    }
+
+    setIsLoading(true)
+    setJobs([])
+
+    try {
+      const response = await listJobApplications()
+      if (!isMountedRef.current) {
+        return
+      }
+
+      setJobs(Array.isArray(response) ? response : [])
+      setErrorMessage(null)
+    } catch (error) {
+      console.error('Failed to load job applications', error)
+      if (!isMountedRef.current) {
+        return
+      }
+
+      setJobs([])
+      setErrorMessage(error.body?.message || 'Unable to load job applications. Please try again.')
+    } finally {
+      if (isMountedRef.current) {
+        setIsLoading(false)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchJobs()
+  }, [fetchJobs])
 
   const jobsByStatus = useMemo(() => {
     return STATUSES.reduce((acc, status) => {
@@ -155,78 +210,210 @@ export function useJobBoard(initialJobs = []) {
     setSuccessMessage(null)
   }, [])
 
-  const updateJobStatus = useCallback((jobId, status) => {
+  const dismissError = useCallback(() => {
+    setErrorMessage(null)
+  }, [])
+
+  const handleManualSubmit = useCallback(
+    async (event) => {
+      event.preventDefault()
+      if (isCreating) {
+        return
+      }
+
+      const sanitizedTitle = manualJob.title.trim()
+      const sanitizedCompany = manualJob.company.trim()
+      const sanitizedLocation = manualJob.location.trim()
+
+      if (!sanitizedTitle || !sanitizedCompany || !sanitizedLocation) {
+        return
+      }
+
+      const normalizedManualLink = normalizeLink(manualJob.link)
+      const sanitizedNotes = manualJob.notes?.trim()
+
+      setIsCreating(true)
+
+      try {
+        const createdJob = await createJobApplication({
+          title: sanitizedTitle,
+          company: sanitizedCompany,
+          location: sanitizedLocation,
+          link: normalizedManualLink || null,
+          notes: sanitizedNotes || 'Added manually.',
+        })
+
+        if (!isMountedRef.current) {
+          return
+        }
+
+        setJobs((previous) => [createdJob, ...previous])
+        resetManualJob()
+        setSuccessMessage('Job added successfully.')
+        setErrorMessage(null)
+      } catch (error) {
+        console.error('Failed to create job application', error)
+        if (isMountedRef.current) {
+          setErrorMessage(error.body?.message || 'Unable to add job application. Please try again.')
+        }
+      } finally {
+        if (isMountedRef.current) {
+          setIsCreating(false)
+        }
+      }
+    },
+    [isCreating, manualJob, resetManualJob]
+  )
+
+  const handleEditSubmit = useCallback(
+    async (event) => {
+      event.preventDefault()
+      if (!editingJob || isSaving) {
+        return
+      }
+
+      const previousJob = editingJob
+      const sanitizedTitle = editForm.title.trim() || previousJob.title
+      const sanitizedCompany = editForm.company.trim() || previousJob.company
+      const sanitizedLocation = editForm.location.trim() || previousJob.location
+      const sanitizedNotes = editForm.notes.trim()
+      const normalizedEditLink = normalizeLink(editForm.link)
+
+      const payload = {
+        title: sanitizedTitle,
+        company: sanitizedCompany,
+        location: sanitizedLocation,
+        link: normalizedEditLink || null,
+        notes: sanitizedNotes || null,
+      }
+
+      const optimisticJob = {
+        ...previousJob,
+        ...payload,
+      }
+
+      setIsSaving(true)
+      setJobs((previous) =>
+        previous.map((job) => (job.id === previousJob.id ? optimisticJob : job))
+      )
+      setEditingJob(optimisticJob)
+
+      try {
+        const updatedJob = await updateJobApplication(previousJob.id, payload)
+        if (!isMountedRef.current) {
+          return
+        }
+
+        setJobs((previous) =>
+          previous.map((job) => (job.id === updatedJob.id ? updatedJob : job))
+        )
+        setSuccessMessage('Job application updated')
+        setErrorMessage(null)
+        closeEditModal()
+      } catch (error) {
+        console.error('Failed to update job application', error)
+        if (!isMountedRef.current) {
+          return
+        }
+
+        setJobs((previous) =>
+          previous.map((job) => (job.id === previousJob.id ? previousJob : job))
+        )
+        setEditingJob(previousJob)
+        setErrorMessage(
+          error.body?.message || 'Unable to update job application. Please try again.'
+        )
+      } finally {
+        if (isMountedRef.current) {
+          setIsSaving(false)
+        }
+      }
+    },
+    [closeEditModal, editForm, editingJob, isSaving]
+  )
+
+  const handleDeleteJob = useCallback(async () => {
+    if (!editingJob || isDeleting) {
+      return
+    }
+
+    setIsDeleting(true)
+
+    try {
+      await deleteJobApplication(editingJob.id)
+      if (!isMountedRef.current) {
+        return
+      }
+
+      setJobs((previous) => previous.filter((job) => job.id !== editingJob.id))
+      setSuccessMessage('Job application removed')
+      setErrorMessage(null)
+      closeEditModal()
+    } catch (error) {
+      console.error('Failed to delete job application', error)
+      if (isMountedRef.current) {
+        setErrorMessage(error.body?.message || 'Unable to delete job application. Please try again.')
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setIsDeleting(false)
+      }
+    }
+  }, [closeEditModal, editingJob, isDeleting])
+
+  const handleStatusChange = useCallback(async (jobId, status) => {
+    if (!jobId) {
+      return
+    }
+
+    let originalJob = null
+    let didChange = false
+
     setJobs((previous) =>
       previous.map((job) => {
         if (job.id !== jobId) {
           return job
         }
 
+        originalJob = job
+        if (job.status === status) {
+          return job
+        }
+
+        didChange = true
         return {
           ...job,
           status,
         }
       })
     )
-  }, [])
 
-  const handleEditSubmit = useCallback(
-    (event) => {
-      event.preventDefault()
-      if (!editingJob) {
+    if (!didChange || !originalJob) {
+      return
+    }
+
+    try {
+      const updatedJob = await updateJobStatusRequest(jobId, status)
+      if (!isMountedRef.current) {
         return
       }
-
-      const normalizedLink = normalizeLink(editForm.link)
 
       setJobs((previous) =>
-        previous.map((job) => {
-          if (job.id !== editingJob.id) {
-            return job
-          }
-
-          return {
-            ...job,
-            title: editForm.title.trim() || job.title,
-            company: editForm.company.trim() || job.company,
-            location: editForm.location.trim() || job.location,
-            link: normalizedLink,
-            notes: editForm.notes.trim(),
-          }
-        })
+        previous.map((job) => (job.id === updatedJob.id ? updatedJob : job))
       )
-
-      closeEditModal()
-      setSuccessMessage('Job application updated')
-    },
-    [closeEditModal, editForm, editingJob]
-  )
-
-  const handleManualSubmit = useCallback(
-    (event) => {
-      event.preventDefault()
-      if (!manualJob.title.trim() || !manualJob.company.trim()) {
+      setErrorMessage(null)
+    } catch (error) {
+      console.error('Failed to update job status', error)
+      if (!isMountedRef.current) {
         return
       }
 
-      const normalizedLink = normalizeLink(manualJob.link)
-
-      const newJob = {
-        id: generateId(),
-        status: 'Applied',
-        notes: manualJob.notes?.trim() || 'Added manually.',
-        title: manualJob.title.trim(),
-        company: manualJob.company.trim(),
-        location: manualJob.location.trim(),
-        link: normalizedLink,
-      }
-
-      setJobs((previous) => [newJob, ...previous])
-      resetManualJob()
-      setSuccessMessage('Job added succesfully.')
-    },
-    [manualJob, resetManualJob]
-  )
+      setJobs((previous) =>
+        previous.map((job) => (job.id === originalJob.id ? originalJob : job))
+      )
+      setErrorMessage(error.body?.message || 'Unable to update job status. Please try again.')
+    }
+  }, [])
 
   const handleDragStart = useCallback((event, jobId) => {
     setDraggedJobId(jobId)
@@ -272,15 +459,9 @@ export function useJobBoard(initialJobs = []) {
       }
 
       setDraggedJobId(null)
-
-      const job = jobs.find((item) => item.id === jobId)
-      if (!job || job.status === status) {
-        return
-      }
-
-      updateJobStatus(jobId, status)
+      handleStatusChange(jobId, status)
     },
-    [draggedJobId, jobs, updateJobStatus]
+    [draggedJobId, handleStatusChange]
   )
 
   return {
@@ -302,10 +483,17 @@ export function useJobBoard(initialJobs = []) {
     editForm,
     updateEditForm,
     handleEditSubmit,
+    handleDeleteJob,
     closeEditModal,
     isEditFormDirty,
     successMessage,
     closeSuccessModal,
+    errorMessage,
+    dismissError,
+    isLoading,
+    isCreating,
+    isSaving,
+    isDeleting,
     expandedStatus,
     openStatusModal,
     closeStatusModal,
@@ -315,5 +503,6 @@ export function useJobBoard(initialJobs = []) {
     totalModalPages,
     goToPreviousModalPage,
     goToNextModalPage,
+    refreshJobs: fetchJobs,
   }
 }

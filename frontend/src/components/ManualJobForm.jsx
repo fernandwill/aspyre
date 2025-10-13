@@ -1,7 +1,7 @@
-export function ManualJobForm({ manualJob, onFieldChange, onSubmit, onClear }) {
+export function ManualJobForm({ manualJob, onFieldChange, onSubmit, onClear, isSubmitting = false }) {
   return (
     <section className="manual-panel">
-      <form className="manual-form" onSubmit={onSubmit}>
+      <form className="manual-form" onSubmit={onSubmit} aria-busy={isSubmitting}>
         <div className="manual-form__header">
           <h2>Add a job application</h2>
         </div>
@@ -17,6 +17,7 @@ export function ManualJobForm({ manualJob, onFieldChange, onSubmit, onClear }) {
               value={manualJob.title}
               onChange={(event) => onFieldChange('title', event.target.value)}
               placeholder="e.g. Senior Backend Engineer"
+              disabled={isSubmitting}
               required
             />
           </div>
@@ -31,6 +32,7 @@ export function ManualJobForm({ manualJob, onFieldChange, onSubmit, onClear }) {
               value={manualJob.company}
               onChange={(event) => onFieldChange('company', event.target.value)}
               placeholder="Company name"
+              disabled={isSubmitting}
               required
             />
           </div>
@@ -45,6 +47,7 @@ export function ManualJobForm({ manualJob, onFieldChange, onSubmit, onClear }) {
               value={manualJob.location}
               onChange={(event) => onFieldChange('location', event.target.value)}
               placeholder="City, Country or Remote"
+              disabled={isSubmitting}
               required
             />
           </div>
@@ -56,6 +59,7 @@ export function ManualJobForm({ manualJob, onFieldChange, onSubmit, onClear }) {
               onChange={(event) => onFieldChange('link', event.target.value)}
               placeholder="https://"
               type="url"
+              disabled={isSubmitting}
             />
           </div>
           <div className="field field--full">
@@ -66,15 +70,16 @@ export function ManualJobForm({ manualJob, onFieldChange, onSubmit, onClear }) {
               onChange={(event) => onFieldChange('notes', event.target.value)}
               placeholder="Add reminders or interview prep notes"
               rows="2"
+              disabled={isSubmitting}
             />
           </div>
         </div>
         <div className="manual-form__actions">
-          <button className="pill-button ghost-button" type="reset" onClick={onClear}>
+          <button className="pill-button ghost-button" type="reset" onClick={onClear} disabled={isSubmitting}>
             Clear
           </button>
-          <button className="pill-button primary-button" type="submit">
-            Add to tracker
+          <button className="pill-button primary-button" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Adding…' : 'Add to tracker'}
           </button>
         </div>
       </form>

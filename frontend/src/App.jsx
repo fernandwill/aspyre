@@ -29,10 +29,17 @@ function App() {
     editForm,
     updateEditForm,
     handleEditSubmit,
+    handleDeleteJob,
     closeEditModal,
     isEditFormDirty,
     successMessage,
     closeSuccessModal,
+    errorMessage,
+    dismissError,
+    isLoading,
+    isCreating,
+    isSaving,
+    isDeleting,
     expandedStatus,
     openStatusModal,
     closeStatusModal,
@@ -63,12 +70,36 @@ function App() {
       </header>
 
       <main className="app-main">
+        {errorMessage && (
+          <div className="feedback-banner" role="alert">
+            <div className="feedback-banner__content">
+              <h3>Something went wrong</h3>
+              <p>{errorMessage}</p>
+            </div>
+            <button
+              type="button"
+              className="pill-button ghost-button feedback-banner__dismiss"
+              onClick={dismissError}
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         <ManualJobForm
           manualJob={manualJob}
           onFieldChange={updateManualJob}
           onSubmit={handleManualSubmit}
           onClear={resetManualJob}
+          isSubmitting={isCreating}
         />
+
+        {isLoading && (
+          <div className="loading-state" role="status" aria-live="polite">
+            <span aria-hidden="true">⏳</span>
+            <span>Loading job applications…</span>
+          </div>
+        )}
 
         <div className="board-divider" role="separator" aria-label="My application board">
           <span className="board-divider__label">My Application</span>
@@ -123,6 +154,9 @@ function App() {
         onChange={updateEditForm}
         onClose={closeEditModal}
         onSubmit={handleEditSubmit}
+        onDelete={handleDeleteJob}
+        isSaving={isSaving}
+        isDeleting={isDeleting}
       />
 
       <SuccessModal message={successMessage} onClose={closeSuccessModal} />
