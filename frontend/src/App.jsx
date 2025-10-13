@@ -356,18 +356,10 @@ function App() {
       </header>
 
       <main className="app-main">
-        <section className="ingest-panel">
-          <div className="ingest-header">
-            <h1>Track and manage job applications</h1>
-            <p>Add job opportunities manually and keep them organized as you progress.</p>
-          </div>
-        </section>
-
         <section className="manual-panel">
           <form className="manual-form" onSubmit={handleManualSubmit}>
             <div className="manual-form__header">
-              <h2>Add a job manually</h2>
-              <p>Capture the essentials and track them directly from your board.</p>
+              <h2>Add a job application</h2>
             </div>
             <div className="manual-form__grid">
               <div className="field">
