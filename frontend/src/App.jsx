@@ -349,12 +349,17 @@ function App() {
                 <div className="column-content">
                   {(jobsByStatus[status] ?? []).map((job) => (
                     <article className="job-card" key={job.id}>
-                      <div className="job-card__top">
-                        <div className="job-card__title">
-                          <h4>{job.title}</h4>
-                          <a href={job.link} target="_blank" rel="noreferrer">
-                            View listing
-                          </a>
+                      <header className="job-card__header">
+                        <div className="job-card__heading">
+                          {job.link ? (
+                            <a className="job-card__title" href={job.link} target="_blank" rel="noreferrer">
+                              {job.title}
+                            </a>
+                          ) : (
+                            <span className="job-card__title job-card__title--static">{job.title}</span>
+                          )}
+                          {job.company && <span className="job-card__company">{job.company}</span>}
+                          {job.location && <span className="job-card__location">{job.location}</span>}
                         </div>
                         <select
                           value={job.status}
@@ -366,20 +371,7 @@ function App() {
                             </option>
                           ))}
                         </select>
-                      </div>
-                      <div className="job-card__meta">
-                        <span>{job.company}</span>
-                        {job.location && <span>• {job.location}</span>}
-                      </div>
-                      {job.tags?.length > 0 && (
-                        <div className="job-card__tags">
-                          {job.tags.map((tag) => (
-                            <span className="tag" key={tag}>
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      </header>
                       {job.notes && <p className="job-card__notes">{job.notes}</p>}
                       <footer className="job-card__footer">
                         <span className="updated">Updated {job.lastUpdate}</span>
