@@ -53,137 +53,8 @@ function generateId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
-const SPECIAL_HOST_COMPANIES = {
-  linkedin: 'LinkedIn',
-  jobstreet: 'JobStreet',
-  indeed: 'Indeed',
-  glassdoor: 'Glassdoor',
-}
-
-function titleCase(value) {
-  return value
-    .replace(/[-_]/g, ' ')
-    .split(' ')
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
-
-function normalizeCompanyFromHost(hostname) {
-  const companySegment = hostname.split('.')[0]
-
-  if (SPECIAL_HOST_COMPANIES[companySegment]) {
-    return SPECIAL_HOST_COMPANIES[companySegment]
-  }
-
-  return titleCase(companySegment)
-}
-
-function extractFromSlug(slug) {
-  if (!slug) {
-    return { title: null, company: null }
-  }
-
-  const cleanedSlug = slug.replace(/\d+$/, '').replace(/-+/g, '-').replace(/^-|-$/g, '')
-
-  if (!cleanedSlug) {
-    return { title: null, company: null }
-  }
-
-  if (cleanedSlug.includes('-at-')) {
-    const [titlePart, companyPart] = cleanedSlug.split('-at-')
-    return {
-      title: titleCase(titlePart),
-      company: titleCase(companyPart),
-    }
-  }
-
-  return {
-    title: titleCase(cleanedSlug),
-    company: null,
-  }
-}
-
-function inferFromUrlStructure(url) {
-  try {
-    const parsedUrl = new URL(url)
-    const host = parsedUrl.hostname.replace(/^www\./, '')
-    const company = normalizeCompanyFromHost(host)
-
-    const pathSegments = parsedUrl.pathname.split('/').filter(Boolean)
-    const slugCandidate = [...pathSegments].reverse().find((segment) => /[a-zA-Z]/.test(segment))
-    const { title: inferredTitle, company: inferredCompany } = extractFromSlug(slugCandidate)
-
-    return {
-      title: inferredTitle || 'New Opportunity',
-      company: inferredCompany || company || 'Unknown Company',
-      location: 'Location TBD',
-    }
-  } catch {
-    return {
-      title: 'New Opportunity',
-      company: 'Unknown Company',
-      location: 'Location TBD',
-    }
-  }
-}
-
-function sanitizeTitle(rawTitle) {
-  if (!rawTitle) {
-    return null
-  }
-
-  const cleaned = rawTitle.replace(/\s+/g, ' ').trim()
-  return cleaned || null
-}
-
-async function inferJobFromUrl(url) {
-  const fallback = inferFromUrlStructure(url)
-
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-    })
-
-    if (!response.ok) {
-      return fallback
-    }
-
-    const contentType = response.headers.get('content-type') ?? ''
-    if (!contentType.includes('text/html')) {
-      return fallback
-    }
-
-    const html = await response.text()
-    const parser = new DOMParser()
-    const document = parser.parseFromString(html, 'text/html')
-
-    const openGraphTitle = document
-      .querySelector('meta[property="og:title"]')
-      ?.getAttribute('content')
-    const twitterTitle = document
-      .querySelector('meta[name="twitter:title"]')
-      ?.getAttribute('content')
-    const documentTitle = document.querySelector('title')?.textContent
-
-    const sanitized = sanitizeTitle(openGraphTitle || twitterTitle || documentTitle)
-
-    if (!sanitized) {
-      return fallback
-    }
-
-    return {
-      ...fallback,
-      title: sanitized,
-    }
-  } catch {
-    return fallback
-  }
-}
-
 function App() {
   const [jobs, setJobs] = useState(INITIAL_JOBS)
-  const [linkInput, setLinkInput] = useState('')
   const [manualJob, setManualJob] = useState({
     title: '',
     company: '',
@@ -379,25 +250,6 @@ function App() {
     setSuccessMessage(null)
   }
 
-  async function handleTrackJob(event) {
-    event.preventDefault()
-    if (!linkInput.trim()) return
-
-    const normalizedLink = normalizeLink(linkInput)
-
-    const inferred = await inferJobFromUrl(normalizedLink)
-    const newJob = {
-      id: generateId(),
-      status: 'Applied',
-      notes: 'Added from URL input.',
-      link: normalizedLink,
-      ...inferred,
-    }
-
-    setJobs((previous) => [newJob, ...previous])
-    setLinkInput('')
-  }
-
   function handleManualSubmit(event) {
     event.preventDefault()
     if (!manualJob.title.trim() || !manualJob.company.trim()) {
@@ -506,33 +358,8 @@ function App() {
       <main className="app-main">
         <section className="ingest-panel">
           <div className="ingest-header">
-            <h1>Track and manage job applications automatically</h1>
-            <p>
-              Paste any job link and we will create a card with the essentials. Update the status as you
-              progress through your interview process.
-            </p>
-          </div>
-          <form className="link-form" onSubmit={handleTrackJob}>
-            <label className="sr-only" htmlFor="job-link">
-              Job URL
-            </label>
-            <input
-              id="job-link"
-              className="link-input"
-              placeholder="Paste any job link here..."
-              value={linkInput}
-              onChange={(event) => setLinkInput(event.target.value)}
-            />
-            <button className="primary-button" type="submit">
-              Track Job
-            </button>
-          </form>
-          <div className="ingest-hint">
-            <span className="hint-pill">URL Parser</span>
-            <span>
-              Works with popular boards like LinkedIn, Greenhouse, Lever, and more. We auto-fill the title and
-              company details.
-            </span>
+            <h1>Track and manage job applications</h1>
+            <p>Add job opportunities manually and keep them organized as you progress.</p>
           </div>
         </section>
 
@@ -540,7 +367,7 @@ function App() {
           <form className="manual-form" onSubmit={handleManualSubmit}>
             <div className="manual-form__header">
               <h2>Add a job manually</h2>
-              <p>Prefer to type the details yourself? Capture the essentials and track from the board.</p>
+              <p>Capture the essentials and track them directly from your board.</p>
             </div>
             <div className="manual-form__grid">
               <div className="field">
