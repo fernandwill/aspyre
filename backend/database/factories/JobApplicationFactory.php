@@ -18,7 +18,7 @@ class JobApplicationFactory extends Factory
     protected $model = JobApplication::class;
 
     /**
-     * Define the model's default state.
+     * Describe the default fake data for a generated job application model.
      *
      * @return array<string, mixed>
      */

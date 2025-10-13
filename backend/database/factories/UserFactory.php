@@ -17,7 +17,7 @@ class UserFactory extends Factory
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * Generate the default set of attributes for a newly created user model.
      *
      * @return array<string, mixed>
      */
@@ -33,7 +33,7 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Provide a state where the user has not yet verified their email address.
      */
     public function unverified(): static
     {

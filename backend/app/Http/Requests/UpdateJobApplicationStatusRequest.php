@@ -8,7 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class UpdateJobApplicationStatusRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Authorize status updates so long as the caller can reach the endpoint.
      */
     public function authorize(): bool
     {
@@ -16,7 +16,7 @@ class UpdateJobApplicationStatusRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Restrict the status update payload to one of the allowed workflow states.
      *
      * @return array<string, mixed>
      */

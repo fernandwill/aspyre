@@ -8,7 +8,9 @@ use Illuminate\Validation\Rule;
 class JobApplicationRules
 {
     /**
-     * Shared validation rules for job application fields.
+     * Build validation rules for all editable job application fields.
+     *
+     * @param bool $partial Whether the rules should allow missing fields for updates.
      */
     public static function fields(bool $partial = false): array
     {
@@ -28,7 +30,7 @@ class JobApplicationRules
     }
 
     /**
-     * Validation rule for updating the status field alone.
+     * Build validation rules for requests that only change the status field.
      */
     public static function status(): array
     {

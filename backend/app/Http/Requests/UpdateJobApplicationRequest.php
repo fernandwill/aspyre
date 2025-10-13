@@ -8,7 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class UpdateJobApplicationRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Permit updates to job applications while access control is handled elsewhere.
      */
     public function authorize(): bool
     {
@@ -16,7 +16,7 @@ class UpdateJobApplicationRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Provide validation rules for partially updating job application fields.
      *
      * @return array<string, mixed>
      */

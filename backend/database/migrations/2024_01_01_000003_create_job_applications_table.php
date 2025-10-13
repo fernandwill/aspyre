@@ -7,11 +7,12 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Create the main table used to store tracked job applications.
      */
     public function up(): void
     {
         Schema::create('job_applications', function (Blueprint $table) {
+            // Persist each job opportunity the user is tracking.
             $table->id();
             $table->string('title');
             $table->string('company');
@@ -30,7 +31,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Drop the job applications table during a rollback.
      */
     public function down(): void
     {

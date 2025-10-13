@@ -1,3 +1,6 @@
+/**
+ * Present a success dialog confirming an operation completed as expected.
+ */
 export function SuccessModal({ message, onClose }) {
   if (!message) {
     return null

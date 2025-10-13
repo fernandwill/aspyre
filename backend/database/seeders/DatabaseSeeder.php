@@ -10,7 +10,7 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Seed the database with a demo user and sample job applications.
      */
     public function run(): void
     {
