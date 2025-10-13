@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { JOBS_PER_MODAL_PAGE, STATUSES } from '../lib/jobBoard'
-import { normalizeLink } from '../lib/jobUtils'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { STATUSES } from '../lib/jobBoard'
+import { sanitizeJobFields } from '../lib/jobUtils'
 import {
   createJobApplication,
   deleteJobApplication,
@@ -8,34 +8,46 @@ import {
   updateJobApplication,
   updateJobStatus as updateJobStatusRequest,
 } from '../lib/api'
+import { useIsMounted } from './useIsMounted'
+import { useModalPagination } from './useModalPagination'
 
 const EMPTY_MANUAL_JOB = { title: '', company: '', location: '', link: '', notes: '' }
 const EMPTY_EDIT_FORM = { title: '', company: '', location: '', link: '', notes: '' }
+
+const updateField = (setState) => (field, value) => {
+  setState((previous) => ({
+    ...previous,
+    [field]: value,
+  }))
+}
 
 function hasEditChanges(editForm, job) {
   if (!job) {
     return false
   }
 
-  const sanitizedTitle = editForm.title.trim()
-  const sanitizedCompany = editForm.company.trim()
-  const sanitizedLocation = editForm.location.trim()
-  const sanitizedNotes = editForm.notes.trim()
-  const normalizedEditLink = normalizeLink(editForm.link)
+  const sanitizedForm = sanitizeJobFields(editForm)
+  const original = sanitizeJobFields(job)
 
-  const originalTitle = (job.title ?? '').trim()
-  const originalCompany = (job.company ?? '').trim()
-  const originalLocation = (job.location ?? '').trim()
-  const originalNotes = (job.notes ?? '').trim()
-  const originalLink = normalizeLink(job.link ?? '')
+  return (
+    (sanitizedForm.title && sanitizedForm.title !== original.title) ||
+    (sanitizedForm.company && sanitizedForm.company !== original.company) ||
+    (sanitizedForm.location && sanitizedForm.location !== original.location) ||
+    sanitizedForm.notes !== original.notes ||
+    sanitizedForm.link !== original.link
+  )
+}
 
-  const titleChanged = sanitizedTitle ? sanitizedTitle !== originalTitle : false
-  const companyChanged = sanitizedCompany ? sanitizedCompany !== originalCompany : false
-  const locationChanged = sanitizedLocation ? sanitizedLocation !== originalLocation : false
-  const notesChanged = sanitizedNotes !== originalNotes
-  const linkChanged = normalizedEditLink !== originalLink
+function buildUpdatePayload(form, job) {
+  const sanitized = sanitizeJobFields(form)
 
-  return titleChanged || companyChanged || locationChanged || notesChanged || linkChanged
+  return {
+    title: sanitized.title || job.title,
+    company: sanitized.company || job.company,
+    location: sanitized.location || job.location,
+    link: sanitized.link || null,
+    notes: sanitized.notes || null,
+  }
 }
 
 export function useJobBoard(initialJobs = []) {
@@ -46,26 +58,16 @@ export function useJobBoard(initialJobs = []) {
   const [editingJob, setEditingJob] = useState(null)
   const [editForm, setEditForm] = useState(EMPTY_EDIT_FORM)
   const [successMessage, setSuccessMessage] = useState(null)
-  const [expandedStatus, setExpandedStatus] = useState(null)
-  const [expandedPage, setExpandedPage] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState(null)
   const [isCreating, setIsCreating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const isMountedRef = useRef(false)
-
-  useEffect(() => {
-    isMountedRef.current = true
-
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [])
+  const isMounted = useIsMounted()
 
   const fetchJobs = useCallback(async () => {
-    if (!isMountedRef.current) {
+    if (!isMounted()) {
       return
     }
 
@@ -74,7 +76,7 @@ export function useJobBoard(initialJobs = []) {
 
     try {
       const response = await listJobApplications()
-      if (!isMountedRef.current) {
+      if (!isMounted()) {
         return
       }
 
@@ -82,18 +84,18 @@ export function useJobBoard(initialJobs = []) {
       setErrorMessage(null)
     } catch (error) {
       console.error('Failed to load job applications', error)
-      if (!isMountedRef.current) {
+      if (!isMounted()) {
         return
       }
 
       setJobs([])
       setErrorMessage(error.body?.message || 'Unable to load job applications. Please try again.')
     } finally {
-      if (isMountedRef.current) {
+      if (isMounted()) {
         setIsLoading(false)
       }
     }
-  }, [])
+  }, [isMounted])
 
   useEffect(() => {
     fetchJobs()
@@ -106,47 +108,7 @@ export function useJobBoard(initialJobs = []) {
     }, {})
   }, [jobs])
 
-  const modalJobs = useMemo(() => {
-    if (!expandedStatus) {
-      return []
-    }
-
-    return jobsByStatus[expandedStatus] ?? []
-  }, [expandedStatus, jobsByStatus])
-
-  const totalModalPages = expandedStatus ? Math.ceil(modalJobs.length / JOBS_PER_MODAL_PAGE) : 0
-
-  const paginatedModalJobs = useMemo(() => {
-    if (!expandedStatus) {
-      return []
-    }
-
-    const start = (expandedPage - 1) * JOBS_PER_MODAL_PAGE
-    return modalJobs.slice(start, start + JOBS_PER_MODAL_PAGE)
-  }, [expandedPage, expandedStatus, modalJobs])
-
-  useEffect(() => {
-    if (!expandedStatus) {
-      return
-    }
-
-    if (totalModalPages === 0) {
-      setExpandedPage(1)
-      return
-    }
-
-    setExpandedPage((currentPage) => {
-      if (currentPage > totalModalPages) {
-        return totalModalPages
-      }
-
-      if (currentPage < 1) {
-        return 1
-      }
-
-      return currentPage
-    })
-  }, [expandedStatus, totalModalPages])
+  const modalControls = useModalPagination(jobsByStatus)
 
   const isEditFormDirty = useMemo(() => hasEditChanges(editForm, editingJob), [editForm, editingJob])
 
@@ -154,54 +116,14 @@ export function useJobBoard(initialJobs = []) {
     setManualJob(EMPTY_MANUAL_JOB)
   }, [])
 
-  const updateManualJob = useCallback((field, value) => {
-    setManualJob((previous) => ({
-      ...previous,
-      [field]: value,
-    }))
-  }, [])
-
-  const openStatusModal = useCallback((status) => {
-    setExpandedStatus(status)
-    setExpandedPage(1)
-  }, [])
-
-  const closeStatusModal = useCallback(() => {
-    setExpandedStatus(null)
-    setExpandedPage(1)
-  }, [])
-
-  const goToPreviousModalPage = useCallback(() => {
-    setExpandedPage((previous) => Math.max(1, previous - 1))
-  }, [])
-
-  const goToNextModalPage = useCallback(() => {
-    setExpandedPage((previous) => {
-      if (!totalModalPages) {
-        return previous
-      }
-
-      return Math.min(totalModalPages, previous + 1)
-    })
-  }, [totalModalPages])
+  const updateManualJob = useMemo(() => updateField(setManualJob), [setManualJob])
 
   const handleEditJob = useCallback((job) => {
     setEditingJob(job)
-    setEditForm({
-      title: job.title ?? '',
-      company: job.company ?? '',
-      location: job.location ?? '',
-      link: job.link ?? '',
-      notes: job.notes ?? '',
-    })
+    setEditForm({ ...EMPTY_EDIT_FORM, ...sanitizeJobFields(job) })
   }, [])
 
-  const updateEditForm = useCallback((field, value) => {
-    setEditForm((previous) => ({
-      ...previous,
-      [field]: value,
-    }))
-  }, [])
+  const updateEditForm = useMemo(() => updateField(setEditForm), [setEditForm])
 
   const closeEditModal = useCallback(() => {
     setEditingJob(null)
@@ -223,48 +145,42 @@ export function useJobBoard(initialJobs = []) {
         return
       }
 
-      const sanitizedTitle = manualJob.title.trim()
-      const sanitizedCompany = manualJob.company.trim()
-      const sanitizedLocation = manualJob.location.trim()
+      const sanitized = sanitizeJobFields(manualJob)
+      const { title, company, location, link, notes } = sanitized
 
-      if (!sanitizedTitle || !sanitizedCompany || !sanitizedLocation) {
+      if (!title || !company || !location) {
         return
       }
-
-      const normalizedManualLink = normalizeLink(manualJob.link)
-      const sanitizedNotes = manualJob.notes?.trim()
 
       setIsCreating(true)
 
       try {
         const createdJob = await createJobApplication({
-          title: sanitizedTitle,
-          company: sanitizedCompany,
-          location: sanitizedLocation,
-          link: normalizedManualLink || null,
-          notes: sanitizedNotes || 'Added manually.',
+          title,
+          company,
+          location,
+          link: link || null,
+          notes: notes || 'Added manually.',
         })
 
-        if (!isMountedRef.current) {
-          return
+        if (isMounted()) {
+          setJobs((previous) => [createdJob, ...previous])
+          resetManualJob()
+          setSuccessMessage('Job added successfully.')
+          setErrorMessage(null)
         }
-
-        setJobs((previous) => [createdJob, ...previous])
-        resetManualJob()
-        setSuccessMessage('Job added successfully.')
-        setErrorMessage(null)
       } catch (error) {
         console.error('Failed to create job application', error)
-        if (isMountedRef.current) {
+        if (isMounted()) {
           setErrorMessage(error.body?.message || 'Unable to add job application. Please try again.')
         }
       } finally {
-        if (isMountedRef.current) {
+        if (isMounted()) {
           setIsCreating(false)
         }
       }
     },
-    [isCreating, manualJob, resetManualJob]
+    [isCreating, isMounted, manualJob, resetManualJob]
   )
 
   const handleEditSubmit = useCallback(
@@ -275,19 +191,7 @@ export function useJobBoard(initialJobs = []) {
       }
 
       const previousJob = editingJob
-      const sanitizedTitle = editForm.title.trim() || previousJob.title
-      const sanitizedCompany = editForm.company.trim() || previousJob.company
-      const sanitizedLocation = editForm.location.trim() || previousJob.location
-      const sanitizedNotes = editForm.notes.trim()
-      const normalizedEditLink = normalizeLink(editForm.link)
-
-      const payload = {
-        title: sanitizedTitle,
-        company: sanitizedCompany,
-        location: sanitizedLocation,
-        link: normalizedEditLink || null,
-        notes: sanitizedNotes || null,
-      }
+      const payload = buildUpdatePayload(editForm, previousJob)
 
       const optimisticJob = {
         ...previousJob,
@@ -302,7 +206,7 @@ export function useJobBoard(initialJobs = []) {
 
       try {
         const updatedJob = await updateJobApplication(previousJob.id, payload)
-        if (!isMountedRef.current) {
+        if (!isMounted()) {
           return
         }
 
@@ -314,7 +218,7 @@ export function useJobBoard(initialJobs = []) {
         closeEditModal()
       } catch (error) {
         console.error('Failed to update job application', error)
-        if (!isMountedRef.current) {
+        if (!isMounted()) {
           return
         }
 
@@ -326,12 +230,12 @@ export function useJobBoard(initialJobs = []) {
           error.body?.message || 'Unable to update job application. Please try again.'
         )
       } finally {
-        if (isMountedRef.current) {
+        if (isMounted()) {
           setIsSaving(false)
         }
       }
     },
-    [closeEditModal, editForm, editingJob, isSaving]
+    [closeEditModal, editForm, editingJob, isMounted, isSaving]
   )
 
   const handleDeleteJob = useCallback(async () => {
@@ -343,7 +247,7 @@ export function useJobBoard(initialJobs = []) {
 
     try {
       await deleteJobApplication(editingJob.id)
-      if (!isMountedRef.current) {
+      if (!isMounted()) {
         return
       }
 
@@ -353,15 +257,15 @@ export function useJobBoard(initialJobs = []) {
       closeEditModal()
     } catch (error) {
       console.error('Failed to delete job application', error)
-      if (isMountedRef.current) {
+      if (isMounted()) {
         setErrorMessage(error.body?.message || 'Unable to delete job application. Please try again.')
       }
     } finally {
-      if (isMountedRef.current) {
+      if (isMounted()) {
         setIsDeleting(false)
       }
     }
-  }, [closeEditModal, editingJob, isDeleting])
+  }, [closeEditModal, editingJob, isDeleting, isMounted])
 
   const handleStatusChange = useCallback(async (jobId, status) => {
     if (!jobId) {
@@ -396,7 +300,7 @@ export function useJobBoard(initialJobs = []) {
 
     try {
       const updatedJob = await updateJobStatusRequest(jobId, status)
-      if (!isMountedRef.current) {
+      if (!isMounted()) {
         return
       }
 
@@ -406,7 +310,7 @@ export function useJobBoard(initialJobs = []) {
       setErrorMessage(null)
     } catch (error) {
       console.error('Failed to update job status', error)
-      if (!isMountedRef.current) {
+      if (!isMounted()) {
         return
       }
 
@@ -415,7 +319,7 @@ export function useJobBoard(initialJobs = []) {
       )
       setErrorMessage(error.body?.message || 'Unable to update job status. Please try again.')
     }
-  }, [])
+  }, [isMounted])
 
   const handleDragStart = useCallback((event, jobId) => {
     setDraggedJobId(jobId)
@@ -496,15 +400,15 @@ export function useJobBoard(initialJobs = []) {
     isCreating,
     isSaving,
     isDeleting,
-    expandedStatus,
-    openStatusModal,
-    closeStatusModal,
-    paginatedModalJobs,
-    modalJobs,
-    expandedPage,
-    totalModalPages,
-    goToPreviousModalPage,
-    goToNextModalPage,
+    expandedStatus: modalControls.status,
+    openStatusModal: modalControls.open,
+    closeStatusModal: modalControls.close,
+    paginatedModalJobs: modalControls.paginatedJobs,
+    modalJobs: modalControls.jobs,
+    expandedPage: modalControls.page,
+    totalModalPages: modalControls.totalPages,
+    goToPreviousModalPage: modalControls.goToPreviousPage,
+    goToNextModalPage: modalControls.goToNextPage,
     refreshJobs: fetchJobs,
   }
 }
