@@ -1,3 +1,6 @@
+/**
+ * Render the manual entry form for adding a new job application to the board.
+ */
 export function ManualJobForm({ manualJob, onFieldChange, onSubmit, onClear, isSubmitting = false }) {
   return (
     <section className="manual-panel">

@@ -13,8 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Register the middleware stack applied to every HTTP request.
         $middleware->use([HandleCors::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Customize how exceptions are reported or rendered if needed.
     })->create();

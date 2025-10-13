@@ -13,6 +13,9 @@ const SIZES = {
   lg: 'shadcn-button--lg',
 }
 
+/**
+ * Provide a styled button component with variant and size shortcuts.
+ */
 export const Button = forwardRef(function Button(
   { className, variant = 'default', size = 'default', type = 'button', ...props },
   ref

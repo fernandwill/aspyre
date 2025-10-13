@@ -10,6 +10,9 @@ class JobApplicationApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Verify the index endpoint returns all stored job applications.
+     */
     public function test_can_list_job_applications(): void
     {
         JobApplication::factory()->count(2)->create();
@@ -20,6 +23,9 @@ class JobApplicationApiTest extends TestCase
         $response->assertJsonCount(2);
     }
 
+    /**
+     * Confirm a job application can be created through the API.
+     */
     public function test_can_create_job_application(): void
     {
         $payload = [
@@ -40,6 +46,9 @@ class JobApplicationApiTest extends TestCase
         ]);
     }
 
+    /**
+     * Ensure validation errors are returned when required fields are missing.
+     */
     public function test_create_job_application_requires_mandatory_fields(): void
     {
         $response = $this->postJson('/api/job-applications', [
@@ -50,6 +59,9 @@ class JobApplicationApiTest extends TestCase
         $response->assertJsonValidationErrors(['company', 'location', 'link']);
     }
 
+    /**
+     * Check that full job details can be updated via the PUT endpoint.
+     */
     public function test_can_update_job_application_details(): void
     {
         $jobApplication = JobApplication::factory()->create();
@@ -71,6 +83,9 @@ class JobApplicationApiTest extends TestCase
         ]);
     }
 
+    /**
+     * Confirm the dedicated status endpoint stores the new workflow state.
+     */
     public function test_can_update_job_application_status(): void
     {
         $jobApplication = JobApplication::factory()->create();
@@ -86,6 +101,9 @@ class JobApplicationApiTest extends TestCase
         ]);
     }
 
+    /**
+     * Make sure invalid statuses are rejected when updating job status.
+     */
     public function test_updating_job_application_status_requires_valid_status(): void
     {
         $jobApplication = JobApplication::factory()->create();
@@ -98,6 +116,9 @@ class JobApplicationApiTest extends TestCase
         $response->assertJsonValidationErrors(['status']);
     }
 
+    /**
+     * Verify a job application can be deleted and removed from the database.
+     */
     public function test_can_delete_job_application(): void
     {
         $jobApplication = JobApplication::factory()->create();

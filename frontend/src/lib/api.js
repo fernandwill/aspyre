@@ -14,6 +14,9 @@ const defaultApiUrl = (() => {
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || defaultApiUrl).replace(/\/$/, '')
 
+/**
+ * Perform a JSON request against the backend API and handle error states.
+ */
 async function request(path, options = {}) {
   const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`
 
@@ -57,10 +60,16 @@ async function request(path, options = {}) {
   return payload
 }
 
+/**
+ * Fetch all job applications for display on the board.
+ */
 export function listJobApplications() {
   return request('/job-applications')
 }
 
+/**
+ * Create a job application using the provided payload.
+ */
 export function createJobApplication(job) {
   return request('/job-applications', {
     method: 'POST',
@@ -68,6 +77,9 @@ export function createJobApplication(job) {
   })
 }
 
+/**
+ * Replace an existing job application with updated field values.
+ */
 export function updateJobApplication(jobId, updates) {
   return request(`/job-applications/${jobId}`, {
     method: 'PUT',
@@ -75,6 +87,9 @@ export function updateJobApplication(jobId, updates) {
   })
 }
 
+/**
+ * Update only the status of the given job application.
+ */
 export function updateJobStatus(jobId, status) {
   return request(`/job-applications/${jobId}/status`, {
     method: 'PATCH',
@@ -82,6 +97,9 @@ export function updateJobStatus(jobId, status) {
   })
 }
 
+/**
+ * Delete a job application from the backend.
+ */
 export function deleteJobApplication(jobId) {
   return request(`/job-applications/${jobId}`, {
     method: 'DELETE',

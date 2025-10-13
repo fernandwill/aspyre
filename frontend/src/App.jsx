@@ -9,6 +9,9 @@ import { Button } from './components/ui/button'
 import { useJobBoard } from './hooks/useJobBoard'
 import { MAIN_STATUSES, OUTCOME_STATUSES } from './lib/jobBoard'
 
+/**
+ * Render the Aspyre job tracking board and wire up all interactions.
+ */
 function App() {
   const {
     jobsByStatus,

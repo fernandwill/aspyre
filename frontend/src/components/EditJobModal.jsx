@@ -1,3 +1,6 @@
+/**
+ * Render the modal for editing or deleting an existing job application.
+ */
 export function EditJobModal({
   job,
   form,

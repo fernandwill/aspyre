@@ -1,5 +1,8 @@
 import { cn } from '../lib/utils'
 
+/**
+ * Render a kanban column containing job cards for a particular status.
+ */
 export function JobColumn({
   status,
   jobs,

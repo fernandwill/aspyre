@@ -12,7 +12,7 @@ use Illuminate\Http\Response;
 class JobApplicationController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Return all job applications sorted by newest first for the kanban board.
      */
     public function index(): JsonResponse
     {
@@ -22,7 +22,7 @@ class JobApplicationController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Persist a newly submitted job application and return it to the client.
      */
     public function store(StoreJobApplicationRequest $request): JsonResponse
     {
@@ -32,7 +32,7 @@ class JobApplicationController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Apply edits to a job application and return the refreshed record.
      */
     public function update(UpdateJobApplicationRequest $request, JobApplication $jobApplication): JsonResponse
     {
@@ -43,7 +43,7 @@ class JobApplicationController extends Controller
     }
 
     /**
-     * Update the status of the specified resource in storage.
+     * Change only the status column for a specific job application.
      */
     public function updateStatus(UpdateJobApplicationStatusRequest $request, JobApplication $jobApplication): JsonResponse
     {
@@ -53,7 +53,7 @@ class JobApplicationController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a job application record when the user removes it from the board.
      */
     public function destroy(JobApplication $jobApplication): Response
     {

@@ -1,3 +1,6 @@
+/**
+ * Display a modal listing all jobs in a specific status with pagination.
+ */
 export function JobsModal({
   status,
   jobs,

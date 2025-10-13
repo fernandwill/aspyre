@@ -14,6 +14,7 @@ import { useModalPagination } from './useModalPagination'
 const EMPTY_MANUAL_JOB = { title: '', company: '', location: '', link: '', notes: '' }
 const EMPTY_EDIT_FORM = { title: '', company: '', location: '', link: '', notes: '' }
 
+// Create a reusable setter that updates a single field on a state object.
 const updateField = (setState) => (field, value) => {
   setState((previous) => ({
     ...previous,
@@ -21,6 +22,9 @@ const updateField = (setState) => (field, value) => {
   }))
 }
 
+/**
+ * Determine whether the edit form differs from the original job details.
+ */
 function hasEditChanges(editForm, job) {
   if (!job) {
     return false
@@ -38,6 +42,9 @@ function hasEditChanges(editForm, job) {
   )
 }
 
+/**
+ * Build the payload for updating a job, preserving existing values when blank.
+ */
 function buildUpdatePayload(form, job) {
   const sanitized = sanitizeJobFields(form)
 
@@ -50,6 +57,9 @@ function buildUpdatePayload(form, job) {
   }
 }
 
+/**
+ * Provide all state and handlers required to manage the job board UI.
+ */
 export function useJobBoard(initialJobs = []) {
   const [jobs, setJobs] = useState(() => (Array.isArray(initialJobs) ? initialJobs : []))
   const [manualJob, setManualJob] = useState(EMPTY_MANUAL_JOB)
@@ -67,6 +77,7 @@ export function useJobBoard(initialJobs = []) {
   const isMounted = useIsMounted()
 
   const fetchJobs = useCallback(async () => {
+    // Retrieve the latest jobs from the API and populate state.
     if (!isMounted()) {
       return
     }
@@ -102,6 +113,7 @@ export function useJobBoard(initialJobs = []) {
   }, [fetchJobs])
 
   const jobsByStatus = useMemo(() => {
+    // Group jobs by their status for easier rendering.
     return STATUSES.reduce((acc, status) => {
       acc[status] = jobs.filter((job) => job.status === status)
       return acc
@@ -110,34 +122,43 @@ export function useJobBoard(initialJobs = []) {
 
   const modalControls = useModalPagination(jobsByStatus)
 
+  // Track whether the edit form has diverged from the persisted job data.
   const isEditFormDirty = useMemo(() => hasEditChanges(editForm, editingJob), [editForm, editingJob])
 
   const resetManualJob = useCallback(() => {
+    // Reset the manual job form back to its empty defaults.
     setManualJob(EMPTY_MANUAL_JOB)
   }, [])
 
+  // Expose a field updater for the manual job form inputs.
   const updateManualJob = useMemo(() => updateField(setManualJob), [setManualJob])
 
   const handleEditJob = useCallback((job) => {
+    // Populate the edit modal with the selected job's details.
     setEditingJob(job)
     setEditForm({ ...EMPTY_EDIT_FORM, ...sanitizeJobFields(job) })
   }, [])
 
+  // Provide a change handler for the edit modal fields.
   const updateEditForm = useMemo(() => updateField(setEditForm), [setEditForm])
 
   const closeEditModal = useCallback(() => {
+    // Close the edit modal and clear any staged form values.
     setEditingJob(null)
     setEditForm(EMPTY_EDIT_FORM)
   }, [])
 
   const closeSuccessModal = useCallback(() => {
+    // Hide the success modal once the user acknowledges it.
     setSuccessMessage(null)
   }, [])
 
   const dismissError = useCallback(() => {
+    // Clear the current error banner message.
     setErrorMessage(null)
   }, [])
 
+  // Submit the manual job form when the user adds a new opportunity.
   const handleManualSubmit = useCallback(
     async (event) => {
       event.preventDefault()
@@ -183,6 +204,7 @@ export function useJobBoard(initialJobs = []) {
     [isCreating, isMounted, manualJob, resetManualJob]
   )
 
+  // Save edits made in the modal and sync them with the API.
   const handleEditSubmit = useCallback(
     async (event) => {
       event.preventDefault()
@@ -238,6 +260,7 @@ export function useJobBoard(initialJobs = []) {
     [closeEditModal, editForm, editingJob, isMounted, isSaving]
   )
 
+  // Remove the currently selected job from the board.
   const handleDeleteJob = useCallback(async () => {
     if (!editingJob || isDeleting) {
       return
@@ -267,6 +290,7 @@ export function useJobBoard(initialJobs = []) {
     }
   }, [closeEditModal, editingJob, isDeleting, isMounted])
 
+  // Persist drag-and-drop status changes to the backend.
   const handleStatusChange = useCallback(async (jobId, status) => {
     if (!jobId) {
       return
@@ -321,21 +345,25 @@ export function useJobBoard(initialJobs = []) {
     }
   }, [isMounted])
 
+  // Begin tracking a drag interaction for a job card.
   const handleDragStart = useCallback((event, jobId) => {
     setDraggedJobId(jobId)
     event.dataTransfer.effectAllowed = 'move'
     event.dataTransfer.setData('text/plain', jobId)
   }, [])
 
+  // Clear drag state when the interaction completes.
   const handleDragEnd = useCallback(() => {
     setDraggedJobId(null)
     setActiveDropStatus(null)
   }, [])
 
+  // Set the active drop target when a card hovers over a column.
   const handleDragEnter = useCallback((status) => {
     setActiveDropStatus(status)
   }, [])
 
+  // Remove column highlighting when a drag leaves the area.
   const handleDragLeave = useCallback(
     (event, status) => {
       if (event.currentTarget.contains(event.relatedTarget)) {
@@ -349,11 +377,13 @@ export function useJobBoard(initialJobs = []) {
     [activeDropStatus]
   )
 
+  // Allow dropping by preventing the default drag-over behavior.
   const handleDragOver = useCallback((event) => {
     event.preventDefault()
     event.dataTransfer.dropEffect = 'move'
   }, [])
 
+  // Complete the drag-and-drop interaction and trigger a status update.
   const handleDrop = useCallback(
     (event, status) => {
       event.preventDefault()

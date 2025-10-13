@@ -7,11 +7,12 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Create the tables needed for Laravel's queue system.
      */
     public function up(): void
     {
         Schema::create('jobs', function (Blueprint $table) {
+            // Store queued jobs that Laravel will process asynchronously.
             $table->id();
             $table->string('queue')->index();
             $table->longText('payload');
@@ -22,6 +23,7 @@ return new class extends Migration
         });
 
         Schema::create('job_batches', function (Blueprint $table) {
+            // Track metadata about batches of queued jobs.
             $table->string('id')->primary();
             $table->string('name');
             $table->integer('total_jobs');
@@ -35,6 +37,7 @@ return new class extends Migration
         });
 
         Schema::create('failed_jobs', function (Blueprint $table) {
+            // Record failed queue jobs to aid in debugging and retries.
             $table->id();
             $table->string('uuid')->unique();
             $table->text('connection');
@@ -46,7 +49,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Drop the queue-related tables when rolling the migration back.
      */
     public function down(): void
     {

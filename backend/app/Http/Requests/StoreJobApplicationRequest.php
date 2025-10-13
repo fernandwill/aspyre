@@ -8,7 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class StoreJobApplicationRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Allow all users to create job applications because there is no auth layer yet.
      */
     public function authorize(): bool
     {
@@ -16,7 +16,7 @@ class StoreJobApplicationRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Define the validation rules for storing a brand new job application.
      *
      * @return array<string, mixed>
      */
