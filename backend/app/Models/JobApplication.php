@@ -9,6 +9,14 @@ class JobApplication extends Model
 {
     use HasFactory;
 
+    public const STATUSES = [
+        'Applied',
+        'Online Assessment',
+        'Interview',
+        'Accepted',
+        'Rejected',
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
