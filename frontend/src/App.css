@@ -721,6 +721,10 @@
   gap: 1rem;
 }
 
+.job-card:not(.job-card--modal) .job-card__header {
+  padding-right: 3rem;
+}
+
 .job-card__heading {
   display: flex;
   flex-direction: column;

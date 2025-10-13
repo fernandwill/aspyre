@@ -181,7 +181,7 @@ export function useJobBoard(initialJobs = []) {
           company,
           location,
           link: link || null,
-          notes: notes || 'Added manually.',
+          notes: notes || null,
         })
 
         if (isMounted()) {
