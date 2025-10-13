@@ -117,6 +117,32 @@ function App() {
   })
   const [showUpdateSuccess, setShowUpdateSuccess] = useState(false)
 
+  const isEditFormDirty = useMemo(() => {
+    if (!editingJob) {
+      return false
+    }
+
+    const sanitizedTitle = editForm.title.trim()
+    const sanitizedCompany = editForm.company.trim()
+    const sanitizedLocation = editForm.location.trim()
+    const sanitizedNotes = editForm.notes.trim()
+    const normalizedLink = normalizeLink(editForm.link)
+
+    const originalTitle = (editingJob.title ?? '').trim()
+    const originalCompany = (editingJob.company ?? '').trim()
+    const originalLocation = (editingJob.location ?? '').trim()
+    const originalNotes = (editingJob.notes ?? '').trim()
+    const originalLink = normalizeLink(editingJob.link ?? '')
+
+    const titleChanged = sanitizedTitle ? sanitizedTitle !== originalTitle : false
+    const companyChanged = sanitizedCompany ? sanitizedCompany !== originalCompany : false
+    const locationChanged = sanitizedLocation ? sanitizedLocation !== originalLocation : false
+    const notesChanged = sanitizedNotes !== originalNotes
+    const linkChanged = normalizedLink !== originalLink
+
+    return titleChanged || companyChanged || locationChanged || notesChanged || linkChanged
+  }, [editForm, editingJob])
+
   const jobsByStatus = useMemo(() => {
     return STATUSES.reduce((acc, status) => {
       acc[status] = jobs.filter((job) => job.status === status)
@@ -570,7 +596,7 @@ function App() {
                 <button type="button" className="ghost-button" onClick={closeEditModal}>
                   Cancel
                 </button>
-                <button type="submit" className="primary-button">
+                <button type="submit" className="primary-button" disabled={!isEditFormDirty}>
                   Save changes
                 </button>
               </div>
@@ -594,34 +620,7 @@ function App() {
                 <path d="M9.5 12.5l1.8 1.8 3.7-3.8" />
               </svg>
             </div>
-            <h2 id="update-success-title">Job application updated.</h2>
-            <p className="modal__success-subtitle">Your changes were saved and the board is ready with the latest details.</p>
-            <ul className="success-checklist">
-              <li>
-                <span className="success-checklist__icon" aria-hidden="true">
-                  <svg viewBox="0 0 20 20" focusable="false">
-                    <path d="M16.667 4.167L7.5 13.333l-4.167-4.166" />
-                  </svg>
-                </span>
-                <span>Updated card details reflect immediately on your board.</span>
-              </li>
-              <li>
-                <span className="success-checklist__icon" aria-hidden="true">
-                  <svg viewBox="0 0 20 20" focusable="false">
-                    <path d="M16.667 4.167L7.5 13.333l-4.167-4.166" />
-                  </svg>
-                </span>
-                <span>Timeline marked as &ldquo;Just now&rdquo; for quick reference.</span>
-              </li>
-              <li>
-                <span className="success-checklist__icon" aria-hidden="true">
-                  <svg viewBox="0 0 20 20" focusable="false">
-                    <path d="M16.667 4.167L7.5 13.333l-4.167-4.166" />
-                  </svg>
-                </span>
-                <span>Revisit the card anytime to adjust status or notes.</span>
-              </li>
-            </ul>
+            <h2 id="update-success-title">Job application updated</h2>
             <div className="modal__actions modal__actions--center">
               <button type="button" className="primary-button" onClick={closeSuccessModal}>
                 Back to board

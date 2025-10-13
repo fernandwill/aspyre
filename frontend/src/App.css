@@ -85,6 +85,20 @@
   box-shadow: 0 14px 30px -15px rgba(249, 115, 22, 1);
 }
 
+.primary-button:disabled {
+  background: #fcd34d;
+  color: rgba(120, 53, 15, 0.6);
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+  transform: none;
+}
+
+.primary-button:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .ghost-button {
   background: rgba(249, 115, 22, 0.1);
   color: #c2410c;
