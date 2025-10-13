@@ -485,6 +485,10 @@ function App() {
           </form>
         </section>
 
+        <div className="board-divider" role="separator" aria-label="My application board">
+          <span className="board-divider__label">My Application</span>
+        </div>
+
         <section className="board-section">
           <div className="board-grid board-grid--main">
             {MAIN_STATUSES.map((status) => renderColumn(status))}
