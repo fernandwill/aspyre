@@ -139,6 +139,24 @@ function App() {
               onDragStart={(event) => handleDragStart(event, job.id)}
               onDragEnd={handleDragEnd}
             >
+              <button
+                type="button"
+                className="job-card__edit-icon"
+                aria-label={`Edit ${job.title}`}
+              >
+                <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                  <path
+                    d="M16.862 3.487a1.75 1.75 0 0 1 2.476 2.476l-9.62 9.62a3 3 0 0 1-1.36.773l-3.17.793a.75.75 0 0 1-.908-.908l.793-3.17a3 3 0 0 1 .773-1.36l9.62-9.62Z"
+                    fill="currentColor"
+                  />
+                  <path
+                    d="M5.25 19.5h13.5"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+              </button>
               <header className="job-card__header">
                 <div className="job-card__heading">
                   {job.link ? (
@@ -155,9 +173,6 @@ function App() {
               {job.notes && <p className="job-card__notes">{job.notes}</p>}
               <footer className="job-card__footer">
                 <span className="updated">Updated {job.lastUpdate}</span>
-                <Button type="button" variant="outline" size="sm">
-                  Edit
-                </Button>
               </footer>
             </article>
           ))}
@@ -289,12 +304,12 @@ function App() {
           </div>
         </div>
         <div className="header-actions">
-          <button className="ghost-button" type="button">
+          <Button type="button" variant="ghost" size="sm">
             Analytics
-          </button>
-          <button className="primary-button" type="button">
-            Add Job Manually
-          </button>
+          </Button>
+          <Button type="button" size="sm">
+            Sign Out
+          </Button>
         </div>
       </header>
 

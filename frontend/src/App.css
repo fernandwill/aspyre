@@ -314,7 +314,9 @@
 }
 
 
+
 .job-card {
+  position: relative;
   background: rgba(255, 255, 255, 0.92);
   border-radius: 18px;
   padding: 1.35rem 1.5rem;
@@ -330,6 +332,50 @@
   border-color: rgba(99, 102, 241, 0.45);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 22px 55px -34px rgba(15, 23, 42, 0.45);
   transform: translateY(-2px);
+}
+
+.job-card__edit-icon {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  background: rgba(99, 102, 241, 0.08);
+  color: #4338ca;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease,
+    border-color 0.2s ease, box-shadow 0.2s ease;
+  pointer-events: none;
+}
+
+.job-card__edit-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.job-card:hover .job-card__edit-icon,
+.job-card__edit-icon:focus-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.job-card__edit-icon:hover {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: rgba(99, 102, 241, 0.45);
+  box-shadow: 0 12px 30px -20px rgba(79, 70, 229, 0.4);
+}
+
+.job-card__edit-icon:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
 }
 
 .job-card__header {
@@ -397,11 +443,6 @@
   align-items: center;
   font-size: 0.8rem;
   color: #6366f1;
-}
-
-.job-card__footer .ghost-button {
-  padding: 0.45rem 0.9rem;
-  font-size: 0.8rem;
 }
 
 .empty-state {
@@ -513,7 +554,8 @@
   }
 
   .header-actions .primary-button,
-  .header-actions .ghost-button {
+  .header-actions .ghost-button,
+  .header-actions .shadcn-button {
     flex: 1;
   }
 
