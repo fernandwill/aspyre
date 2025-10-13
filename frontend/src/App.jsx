@@ -112,7 +112,7 @@ function App() {
     link: '',
     notes: '',
   })
-  const [showUpdateSuccess, setShowUpdateSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState(null)
 
   const isEditFormDirty = useMemo(() => {
     if (!editingJob) {
@@ -282,11 +282,11 @@ function App() {
     )
 
     closeEditModal()
-    setShowUpdateSuccess(true)
+    setSuccessMessage('Job application updated')
   }
 
   function closeSuccessModal() {
-    setShowUpdateSuccess(false)
+    setSuccessMessage(null)
   }
 
   function handleTrackJob(event) {
@@ -328,6 +328,7 @@ function App() {
 
     setJobs((previous) => [newJob, ...previous])
     setManualJob({ title: '', company: '', location: '', link: '', notes: '' })
+    setSuccessMessage('Job added succesfully.')
   }
 
   function handleDragStart(event, jobId) {
@@ -377,6 +378,21 @@ function App() {
     }
 
     updateJobStatus(jobId, status)
+  }
+
+  function updateJobStatus(jobId, status) {
+    setJobs((previous) =>
+      previous.map((job) => {
+        if (job.id !== jobId) {
+          return job
+        }
+
+        return {
+          ...job,
+          status,
+        }
+      })
+    )
   }
 
   return (
@@ -589,14 +605,14 @@ function App() {
           </div>
         </div>
       )}
-      {showUpdateSuccess && (
+      {successMessage && (
         <div className="modal-backdrop" role="presentation" onClick={closeSuccessModal}>
           <div
             className="modal modal--success"
             role="alertdialog"
             aria-live="assertive"
             aria-modal="true"
-            aria-labelledby="update-success-title"
+            aria-labelledby="success-modal-title"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="modal__success-icon" aria-hidden="true">
@@ -605,7 +621,7 @@ function App() {
                 <path d="M9.5 12.5l1.8 1.8 3.7-3.8" />
               </svg>
             </div>
-            <h2 id="update-success-title">Job application updated</h2>
+            <h2 id="success-modal-title">{successMessage}</h2>
             <div className="modal__actions modal__actions--center">
               <button type="button" className="primary-button" onClick={closeSuccessModal}>
                 Back to board
