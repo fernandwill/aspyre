@@ -75,7 +75,7 @@ function App() {
         </div>
 
         <section className="board-section">
-          <div className="board-grid">
+          <div className="board-grid board-grid--main">
             {MAIN_STATUSES.map((status) => (
               <JobColumn
                 key={status}
