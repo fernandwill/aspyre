@@ -9,6 +9,9 @@ const STATUSES = [
   'Rejected',
 ]
 
+const MAIN_STATUSES = STATUSES.slice(0, 3)
+const OUTCOME_STATUSES = STATUSES.slice(3)
+
 const INITIAL_JOBS = [
   {
     id: '1',
@@ -113,6 +116,64 @@ function App() {
       return acc
     }, {})
   }, [jobs])
+
+  const renderColumn = (status) => {
+    return (
+      <div
+        className={`board-column ${activeDropStatus === status ? 'board-column--active' : ''}`}
+        key={status}
+        onDragOver={handleDragOver}
+        onDrop={(event) => handleDrop(event, status)}
+        onDragEnter={() => handleDragEnter(status)}
+        onDragLeave={(event) => handleDragLeave(event, status)}
+      >
+        <header className="column-header">
+          <div>
+            <h3>{status}</h3>
+            <span className="column-count">{jobsByStatus[status]?.length ?? 0} jobs</span>
+          </div>
+        </header>
+        <div className="column-content">
+          {(jobsByStatus[status] ?? []).map((job) => (
+            <article
+              className={`job-card ${draggedJobId === job.id ? 'job-card--dragging' : ''}`}
+              draggable
+              key={job.id}
+              onDragStart={(event) => handleDragStart(event, job.id)}
+              onDragEnd={handleDragEnd}
+            >
+              <header className="job-card__header">
+                <div className="job-card__heading">
+                  {job.link ? (
+                    <a className="job-card__title" href={job.link} target="_blank" rel="noreferrer">
+                      {job.title}
+                    </a>
+                  ) : (
+                    <span className="job-card__title job-card__title--static">{job.title}</span>
+                  )}
+                  {job.company && <span className="job-card__company">{job.company}</span>}
+                  {job.location && <span className="job-card__location">{job.location}</span>}
+                </div>
+              </header>
+              {job.notes && <p className="job-card__notes">{job.notes}</p>}
+              <footer className="job-card__footer">
+                <span className="updated">Updated {job.lastUpdate}</span>
+                <button className="ghost-button" type="button">
+                  Add note
+                </button>
+              </footer>
+            </article>
+          ))}
+          {(jobsByStatus[status] ?? []).length === 0 && (
+            <div className="empty-state">
+              <p>No jobs here yet.</p>
+              <span>Move a card or add a new opportunity.</span>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   function handleTrackJob(event) {
     event.preventDefault()
@@ -373,64 +434,11 @@ function App() {
               </select>
             </div>
           </div>
-          <div className="board-columns">
-            {STATUSES.map((status) => (
-              <div
-                className={`board-column ${
-                  activeDropStatus === status ? 'board-column--active' : ''
-                }`}
-                key={status}
-                onDragOver={handleDragOver}
-                onDrop={(event) => handleDrop(event, status)}
-                onDragEnter={() => handleDragEnter(status)}
-                onDragLeave={(event) => handleDragLeave(event, status)}
-              >
-                <header className="column-header">
-                  <div>
-                    <h3>{status}</h3>
-                    <span className="column-count">{jobsByStatus[status]?.length ?? 0} jobs</span>
-                  </div>
-                </header>
-                <div className="column-content">
-                  {(jobsByStatus[status] ?? []).map((job) => (
-                    <article
-                      className={`job-card ${draggedJobId === job.id ? 'job-card--dragging' : ''}`}
-                      draggable
-                      key={job.id}
-                      onDragStart={(event) => handleDragStart(event, job.id)}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <header className="job-card__header">
-                        <div className="job-card__heading">
-                          {job.link ? (
-                            <a className="job-card__title" href={job.link} target="_blank" rel="noreferrer">
-                              {job.title}
-                            </a>
-                          ) : (
-                            <span className="job-card__title job-card__title--static">{job.title}</span>
-                          )}
-                          {job.company && <span className="job-card__company">{job.company}</span>}
-                          {job.location && <span className="job-card__location">{job.location}</span>}
-                        </div>
-                      </header>
-                      {job.notes && <p className="job-card__notes">{job.notes}</p>}
-                      <footer className="job-card__footer">
-                        <span className="updated">Updated {job.lastUpdate}</span>
-                        <button className="ghost-button" type="button">
-                          Add note
-                        </button>
-                      </footer>
-                    </article>
-                  ))}
-                  {(jobsByStatus[status] ?? []).length === 0 && (
-                    <div className="empty-state">
-                      <p>No jobs here yet.</p>
-                      <span>Move a card or add a new opportunity.</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+          <div className="board-grid board-grid--main">
+            {MAIN_STATUSES.map((status) => renderColumn(status))}
+          </div>
+          <div className="board-grid board-grid--outcome">
+            {OUTCOME_STATUSES.map((status) => renderColumn(status))}
           </div>
         </section>
       </main>
