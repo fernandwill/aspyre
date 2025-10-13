@@ -70,10 +70,10 @@ export function EditJobModal({ job, form, isDirty, onChange, onClose, onSubmit }
             />
           </label>
           <div className="modal__actions">
-            <button type="button" className="ghost-button" onClick={onClose}>
+            <button type="button" className="pill-button ghost-button" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="primary-button" disabled={!isDirty}>
+            <button type="submit" className="pill-button primary-button" disabled={!isDirty}>
               Save changes
             </button>
           </div>
