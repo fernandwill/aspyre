@@ -482,6 +482,12 @@
   color: #1e293b;
 }
 
+.required-indicator {
+  color: #dc2626;
+  margin-left: 0.25rem;
+  font-weight: 700;
+}
+
 .field input,
 .field textarea,
 .toolbar-group select {

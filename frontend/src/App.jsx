@@ -438,7 +438,11 @@ function App() {
             </div>
             <div className="manual-form__grid">
               <div className="field">
-                <label htmlFor="manual-title">Job title</label>
+                <label htmlFor="manual-title">
+                  Job title
+                  <span className="required-indicator" aria-hidden="true">*</span>
+                  <span className="sr-only"> required</span>
+                </label>
                 <input
                   id="manual-title"
                   value={manualJob.title}
@@ -448,7 +452,11 @@ function App() {
                 />
               </div>
               <div className="field">
-                <label htmlFor="manual-company">Company</label>
+                <label htmlFor="manual-company">
+                  Company
+                  <span className="required-indicator" aria-hidden="true">*</span>
+                  <span className="sr-only"> required</span>
+                </label>
                 <input
                   id="manual-company"
                   value={manualJob.company}
@@ -458,12 +466,17 @@ function App() {
                 />
               </div>
               <div className="field">
-                <label htmlFor="manual-location">Location</label>
+                <label htmlFor="manual-location">
+                  Location
+                  <span className="required-indicator" aria-hidden="true">*</span>
+                  <span className="sr-only"> required</span>
+                </label>
                 <input
                   id="manual-location"
                   value={manualJob.location}
                   onChange={(event) => setManualJob((prev) => ({ ...prev, location: event.target.value }))}
                   placeholder="City, Country or Remote"
+                  required
                 />
               </div>
               <div className="field">
@@ -534,7 +547,11 @@ function App() {
             </div>
             <form className="modal__form" onSubmit={handleEditSubmit}>
               <label className="modal__field">
-                <span>Job title</span>
+                <span>
+                  Job title
+                  <span className="required-indicator" aria-hidden="true">*</span>
+                  <span className="sr-only"> required</span>
+                </span>
                 <input
                   value={editForm.title}
                   onChange={(event) => handleEditFormChange('title', event.target.value)}
@@ -543,7 +560,11 @@ function App() {
                 />
               </label>
               <label className="modal__field">
-                <span>Company</span>
+                <span>
+                  Company
+                  <span className="required-indicator" aria-hidden="true">*</span>
+                  <span className="sr-only"> required</span>
+                </span>
                 <input
                   value={editForm.company}
                   onChange={(event) => handleEditFormChange('company', event.target.value)}
@@ -552,11 +573,16 @@ function App() {
                 />
               </label>
               <label className="modal__field">
-                <span>Location</span>
+                <span>
+                  Location
+                  <span className="required-indicator" aria-hidden="true">*</span>
+                  <span className="sr-only"> required</span>
+                </span>
                 <input
                   value={editForm.location}
                   onChange={(event) => handleEditFormChange('location', event.target.value)}
                   type="text"
+                  required
                 />
               </label>
               <label className="modal__field">
