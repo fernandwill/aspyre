@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { Button } from './components/ui/button'
 import aspyreLogo from './assets/aspyre-icon.svg'
@@ -108,6 +108,51 @@ function App() {
   const [draggedJobId, setDraggedJobId] = useState(null)
   const [activeDropStatus, setActiveDropStatus] = useState(null)
 
+  useEffect(() => {
+    function handleMessage(event) {
+      if (!event?.data || event.data.type !== 'update-job') {
+        return
+      }
+
+      if (event.origin && event.origin !== 'null' && event.origin !== window.location.origin) {
+        return
+      }
+
+      const updatedJob = event.data.payload ?? {}
+      if (!updatedJob.id) {
+        return
+      }
+
+      setJobs((previous) =>
+        previous.map((job) => {
+          if (job.id !== updatedJob.id) {
+            return job
+          }
+
+          const normalizedLink = normalizeLink(updatedJob.link ?? '')
+          const sanitizedStatus = STATUSES.includes(updatedJob.status) ? updatedJob.status : job.status
+
+          return {
+            ...job,
+            title: updatedJob.title?.trim() || job.title,
+            company: updatedJob.company?.trim() || job.company,
+            location: updatedJob.location?.trim() || job.location,
+            link: normalizedLink,
+            notes: updatedJob.notes?.trim() ?? '',
+            status: sanitizedStatus,
+            lastUpdate: 'Just now',
+          }
+        })
+      )
+    }
+
+    window.addEventListener('message', handleMessage)
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
+    }
+  }, [])
+
   const jobsByStatus = useMemo(() => {
     return STATUSES.reduce((acc, status) => {
       acc[status] = jobs.filter((job) => job.status === status)
@@ -144,6 +189,7 @@ function App() {
                 type="button"
                 className="job-card__edit-icon"
                 aria-label={`Edit ${job.title}`}
+                onClick={() => handleEditJob(job)}
               >
                 <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
                   <path
@@ -188,14 +234,212 @@ function App() {
     )
   }
 
+  function normalizeLink(link) {
+    const cleanedLink = link?.trim()
+    if (!cleanedLink) {
+      return ''
+    }
+
+    return cleanedLink.match(/^https?:\/\//i) ? cleanedLink : `https://${cleanedLink}`
+  }
+
+  function handleEditJob(job) {
+    const editWindow = window.open('', '', 'width=480,height=640')
+    if (!editWindow) {
+      return
+    }
+
+    const jobData = {
+      id: job.id,
+      title: job.title ?? '',
+      company: job.company ?? '',
+      location: job.location ?? '',
+      status: job.status ?? STATUSES[0],
+      link: job.link ?? '',
+      notes: job.notes ?? '',
+    }
+
+    const serializedJobData = JSON.stringify(jobData).replace(/</g, '\\u003c')
+
+    const statusOptions = STATUSES.map(
+      (status) => `<option value="${status}">${status}</option>`
+    ).join('')
+
+    const formHtml = `<!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>Edit Job</title>
+          <style>
+            body {
+              margin: 0;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+              background: #f7f7fb;
+              color: #111827;
+            }
+            .wrapper {
+              max-width: 560px;
+              margin: 0 auto;
+              padding: 24px 20px 32px;
+            }
+            h1 {
+              margin: 0 0 20px;
+              font-size: 24px;
+            }
+            form {
+              display: grid;
+              gap: 16px;
+            }
+            label {
+              display: flex;
+              flex-direction: column;
+              font-size: 14px;
+              gap: 6px;
+              color: #374151;
+            }
+            input,
+            select,
+            textarea {
+              font: inherit;
+              border: 1px solid #d1d5db;
+              border-radius: 8px;
+              padding: 10px 12px;
+              background-color: #fff;
+              transition: border 0.2s ease, box-shadow 0.2s ease;
+            }
+            input:focus,
+            select:focus,
+            textarea:focus {
+              outline: none;
+              border-color: #6366f1;
+              box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            }
+            textarea {
+              min-height: 120px;
+              resize: vertical;
+            }
+            .actions {
+              display: flex;
+              gap: 12px;
+              justify-content: flex-end;
+              margin-top: 8px;
+            }
+            button {
+              font: inherit;
+              padding: 10px 18px;
+              border-radius: 999px;
+              border: none;
+              cursor: pointer;
+              transition: transform 0.1s ease, box-shadow 0.1s ease;
+            }
+            button:focus-visible {
+              outline: 2px solid #6366f1;
+              outline-offset: 2px;
+            }
+            .button-primary {
+              background: linear-gradient(135deg, #6366f1, #8b5cf6);
+              color: #fff;
+              box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+            }
+            .button-primary:hover {
+              transform: translateY(-1px);
+            }
+            .button-secondary {
+              background: #e5e7eb;
+              color: #374151;
+            }
+            .button-secondary:hover {
+              transform: translateY(-1px);
+            }
+          </style>
+        </head>
+        <body>
+          <div class="wrapper">
+            <h1>Edit job posting</h1>
+            <form id="edit-job-form">
+              <label for="edit-title">Job title
+                <input id="edit-title" name="title" type="text" required />
+              </label>
+              <label for="edit-company">Company
+                <input id="edit-company" name="company" type="text" required />
+              </label>
+              <label for="edit-location">Location
+                <input id="edit-location" name="location" type="text" />
+              </label>
+              <label for="edit-status">Status
+                <select id="edit-status" name="status" required>
+                  ${statusOptions}
+                </select>
+              </label>
+              <label for="edit-link">Job link
+                <input id="edit-link" name="link" type="url" placeholder="https://" />
+              </label>
+              <label for="edit-notes">Notes
+                <textarea id="edit-notes" name="notes" placeholder="Interview prep, reminders..."></textarea>
+              </label>
+              <div class="actions">
+                <button type="button" class="button-secondary" id="cancel-edit">Cancel</button>
+                <button type="submit" class="button-primary">Save changes</button>
+              </div>
+            </form>
+          </div>
+          <script>
+            const jobData = ${serializedJobData}
+
+            const form = document.getElementById('edit-job-form')
+            const titleInput = document.getElementById('edit-title')
+            const companyInput = document.getElementById('edit-company')
+            const locationInput = document.getElementById('edit-location')
+            const statusSelect = document.getElementById('edit-status')
+            const linkInput = document.getElementById('edit-link')
+            const notesInput = document.getElementById('edit-notes')
+
+            titleInput.value = jobData.title || ''
+            companyInput.value = jobData.company || ''
+            locationInput.value = jobData.location || ''
+            statusSelect.value = jobData.status || '${STATUSES[0]}'
+            linkInput.value = jobData.link || ''
+            notesInput.value = jobData.notes || ''
+
+            document.getElementById('cancel-edit').addEventListener('click', () => {
+              window.close()
+            })
+
+            form.addEventListener('submit', (event) => {
+              event.preventDefault()
+
+              const formData = new FormData(form)
+              const payload = {
+                id: jobData.id,
+                title: formData.get('title') || '',
+                company: formData.get('company') || '',
+                location: formData.get('location') || '',
+                status: formData.get('status') || '${STATUSES[0]}',
+                link: formData.get('link') || '',
+                notes: formData.get('notes') || '',
+              }
+
+              if (window.opener) {
+                window.opener.postMessage({ type: 'update-job', payload }, '*')
+              }
+
+              window.close()
+            })
+          </script>
+        </body>
+      </html>`
+
+    editWindow.document.write(formHtml)
+    editWindow.document.close()
+    editWindow.focus()
+  }
+
   function handleTrackJob(event) {
     event.preventDefault()
     if (!linkInput.trim()) return
 
-    const cleanedLink = linkInput.trim()
-    const normalizedLink = cleanedLink.match(/^https?:\/\//i)
-      ? cleanedLink
-      : `https://${cleanedLink}`
+    const normalizedLink = normalizeLink(linkInput)
 
     const inferred = inferJobFromUrl(normalizedLink)
     const newJob = {
@@ -217,12 +461,7 @@ function App() {
       return
     }
 
-    const cleanedLink = manualJob.link?.trim()
-    const normalizedLink = cleanedLink
-      ? cleanedLink.match(/^https?:\/\//i)
-        ? cleanedLink
-        : `https://${cleanedLink}`
-      : ''
+    const normalizedLink = normalizeLink(manualJob.link)
 
     const newJob = {
       id: generateId(),
