@@ -27,7 +27,7 @@ class UpdateJobApplicationRequest extends FormRequest
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'company' => ['sometimes', 'required', 'string', 'max:255'],
             'location' => ['sometimes', 'required', 'string', 'max:255'],
-            'link' => ['sometimes', 'required', 'url', 'max:255'],
+            'link' => ['sometimes', 'nullable', 'url', 'max:255'],
             'notes' => ['sometimes', 'nullable', 'string'],
             'status' => ['sometimes', 'required', 'string', Rule::in(JobApplication::STATUSES)],
         ];

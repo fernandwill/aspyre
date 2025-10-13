@@ -1,7 +1,19 @@
-export function EditJobModal({ job, form, isDirty, onChange, onClose, onSubmit }) {
+export function EditJobModal({
+  job,
+  form,
+  isDirty,
+  onChange,
+  onClose,
+  onSubmit,
+  onDelete,
+  isSaving = false,
+  isDeleting = false,
+}) {
   if (!job) {
     return null
   }
+
+  const isBusy = isSaving || isDeleting
 
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
@@ -26,13 +38,14 @@ export function EditJobModal({ job, form, isDirty, onChange, onClose, onSubmit }
             </svg>
           </button>
         </header>
-        <form className="modal__form" onSubmit={onSubmit}>
+        <form className="modal__form" onSubmit={onSubmit} aria-busy={isBusy}>
           <label className="modal__field">
             <span>Job title</span>
             <input
               value={form.title}
               onChange={(event) => onChange('title', event.target.value)}
               placeholder="e.g. Senior Backend Engineer"
+              disabled={isBusy}
             />
           </label>
           <label className="modal__field">
@@ -41,6 +54,7 @@ export function EditJobModal({ job, form, isDirty, onChange, onClose, onSubmit }
               value={form.company}
               onChange={(event) => onChange('company', event.target.value)}
               placeholder="Company name"
+              disabled={isBusy}
             />
           </label>
           <label className="modal__field">
@@ -49,6 +63,7 @@ export function EditJobModal({ job, form, isDirty, onChange, onClose, onSubmit }
               value={form.location}
               onChange={(event) => onChange('location', event.target.value)}
               placeholder="City, Country or Remote"
+              disabled={isBusy}
             />
           </label>
           <label className="modal__field">
@@ -58,6 +73,7 @@ export function EditJobModal({ job, form, isDirty, onChange, onClose, onSubmit }
               onChange={(event) => onChange('link', event.target.value)}
               placeholder="https://"
               type="url"
+              disabled={isBusy}
             />
           </label>
           <label className="modal__field">
@@ -67,14 +83,32 @@ export function EditJobModal({ job, form, isDirty, onChange, onClose, onSubmit }
               onChange={(event) => onChange('notes', event.target.value)}
               placeholder="Add reminders or interview prep notes"
               rows="4"
+              disabled={isBusy}
             />
           </label>
           <div className="modal__actions">
-            <button type="button" className="pill-button ghost-button" onClick={onClose}>
+            <button
+              type="button"
+              className="pill-button danger-button"
+              onClick={onDelete}
+              disabled={isBusy}
+            >
+              {isDeleting ? 'Removing…' : 'Delete job'}
+            </button>
+            <button
+              type="button"
+              className="pill-button ghost-button"
+              onClick={onClose}
+              disabled={isBusy}
+            >
               Cancel
             </button>
-            <button type="submit" className="pill-button primary-button" disabled={!isDirty}>
-              Save changes
+            <button
+              type="submit"
+              className="pill-button primary-button"
+              disabled={!isDirty || isSaving || isDeleting}
+            >
+              {isSaving ? 'Saving…' : 'Save changes'}
             </button>
           </div>
         </form>

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('title');
             $table->string('company');
             $table->string('location');
-            $table->string('link');
+            $table->string('link')->nullable();
             $table->text('notes')->nullable();
             $table->enum('status', [
                 'Applied',

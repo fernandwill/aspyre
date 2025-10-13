@@ -27,7 +27,7 @@ class StoreJobApplicationRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'company' => ['required', 'string', 'max:255'],
             'location' => ['required', 'string', 'max:255'],
-            'link' => ['required', 'url', 'max:255'],
+            'link' => ['nullable', 'url', 'max:255'],
             'notes' => ['nullable', 'string'],
             'status' => ['nullable', 'string', Rule::in(JobApplication::STATUSES)],
         ];
