@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Models\JobApplication;
+use App\Support\JobApplicationRules;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreJobApplicationRequest extends FormRequest
 {
@@ -23,13 +22,6 @@ class StoreJobApplicationRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'title' => ['required', 'string', 'max:255'],
-            'company' => ['required', 'string', 'max:255'],
-            'location' => ['required', 'string', 'max:255'],
-            'link' => ['nullable', 'url', 'max:255'],
-            'notes' => ['nullable', 'string'],
-            'status' => ['nullable', 'string', Rule::in(JobApplication::STATUSES)],
-        ];
+        return JobApplicationRules::fields();
     }
 }

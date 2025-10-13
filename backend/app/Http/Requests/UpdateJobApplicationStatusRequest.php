@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Models\JobApplication;
+use App\Support\JobApplicationRules;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateJobApplicationStatusRequest extends FormRequest
 {
@@ -23,8 +22,6 @@ class UpdateJobApplicationStatusRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'status' => ['required', 'string', Rule::in(JobApplication::STATUSES)],
-        ];
+        return JobApplicationRules::status();
     }
 }

@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Models\JobApplication;
+use App\Support\JobApplicationRules;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateJobApplicationRequest extends FormRequest
 {
@@ -23,13 +22,6 @@ class UpdateJobApplicationRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'title' => ['sometimes', 'required', 'string', 'max:255'],
-            'company' => ['sometimes', 'required', 'string', 'max:255'],
-            'location' => ['sometimes', 'required', 'string', 'max:255'],
-            'link' => ['sometimes', 'nullable', 'url', 'max:255'],
-            'notes' => ['sometimes', 'nullable', 'string'],
-            'status' => ['sometimes', 'required', 'string', Rule::in(JobApplication::STATUSES)],
-        ];
+        return JobApplicationRules::fields(true);
     }
 }
