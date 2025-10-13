@@ -23,7 +23,6 @@ const INITIAL_JOBS = [
     link: 'https://jobs.lever.co/example/frontend-engineer',
     status: 'Applied',
     notes: 'Reached out to recruiter on LinkedIn. Waiting for response.',
-    lastUpdate: '2 days ago',
   },
   {
     id: '2',
@@ -33,7 +32,6 @@ const INITIAL_JOBS = [
     link: 'https://boards.greenhouse.io/example/product-designer',
     status: 'Interview',
     notes: 'Second round scheduled next Tuesday.',
-    lastUpdate: '5 hours ago',
   },
   {
     id: '3',
@@ -43,7 +41,6 @@ const INITIAL_JOBS = [
     link: 'https://jobs.example.com/vector-analytics/data-scientist',
     status: 'Online Assessment',
     notes: 'Assessment submitted, awaiting feedback.',
-    lastUpdate: '1 day ago',
   },
 ]
 
@@ -208,9 +205,6 @@ function App() {
                 </div>
               </header>
               {job.notes && <p className="job-card__notes">{job.notes}</p>}
-              <footer className="job-card__footer">
-                <span className="updated">Updated {job.lastUpdate}</span>
-              </footer>
             </article>
           ))}
           {(jobsByStatus[status] ?? []).length === 0 && (
@@ -283,7 +277,6 @@ function App() {
           location: editForm.location.trim() || job.location,
           link: normalizedLink,
           notes: editForm.notes.trim(),
-          lastUpdate: 'Just now',
         }
       })
     )
@@ -307,7 +300,6 @@ function App() {
       id: generateId(),
       status: 'Applied',
       notes: 'Added from URL input.',
-      lastUpdate: 'Just now',
       link: normalizedLink,
       ...inferred,
     }
@@ -328,7 +320,6 @@ function App() {
       id: generateId(),
       status: 'Applied',
       notes: manualJob.notes?.trim() || 'Added manually.',
-      lastUpdate: 'Just now',
       title: manualJob.title.trim(),
       company: manualJob.company.trim(),
       location: manualJob.location.trim(),
@@ -337,12 +328,6 @@ function App() {
 
     setJobs((previous) => [newJob, ...previous])
     setManualJob({ title: '', company: '', location: '', link: '', notes: '' })
-  }
-
-  function updateJobStatus(id, status) {
-    setJobs((previous) =>
-      previous.map((job) => (job.id === id ? { ...job, status, lastUpdate: 'Just now' } : job))
-    )
   }
 
   function handleDragStart(event, jobId) {
