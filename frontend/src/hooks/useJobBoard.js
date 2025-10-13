@@ -54,9 +54,11 @@ export function useJobBoard(initialJobs = []) {
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const isMountedRef = useRef(true)
+  const isMountedRef = useRef(false)
 
   useEffect(() => {
+    isMountedRef.current = true
+
     return () => {
       isMountedRef.current = false
     }
