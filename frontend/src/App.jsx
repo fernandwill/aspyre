@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { Button } from './components/ui/button'
 import aspyreLogo from './assets/aspyre-icon.svg'
@@ -13,6 +13,7 @@ const STATUSES = [
 
 const MAIN_STATUSES = STATUSES.slice(0, 3)
 const OUTCOME_STATUSES = STATUSES.slice(3)
+const JOBS_PER_MODAL_PAGE = 10
 
 const INITIAL_JOBS = [
   {
@@ -74,6 +75,8 @@ function App() {
     notes: '',
   })
   const [successMessage, setSuccessMessage] = useState(null)
+  const [expandedStatus, setExpandedStatus] = useState(null)
+  const [expandedPage, setExpandedPage] = useState(1)
 
   const isEditFormDirty = useMemo(() => {
     if (!editingJob) {
@@ -108,7 +111,69 @@ function App() {
     }, {})
   }, [jobs])
 
+  const modalJobs = useMemo(() => {
+    if (!expandedStatus) {
+      return []
+    }
+
+    return jobsByStatus[expandedStatus] ?? []
+  }, [expandedStatus, jobsByStatus])
+
+  const totalModalPages = expandedStatus ? Math.ceil(modalJobs.length / JOBS_PER_MODAL_PAGE) : 0
+  const paginatedModalJobs = expandedStatus
+    ? modalJobs.slice((expandedPage - 1) * JOBS_PER_MODAL_PAGE, expandedPage * JOBS_PER_MODAL_PAGE)
+    : []
+
+  useEffect(() => {
+    if (!expandedStatus) {
+      return
+    }
+
+    if (totalModalPages === 0) {
+      setExpandedPage(1)
+      return
+    }
+
+    setExpandedPage((currentPage) => {
+      if (currentPage > totalModalPages) {
+        return totalModalPages
+      }
+
+      if (currentPage < 1) {
+        return 1
+      }
+
+      return currentPage
+    })
+  }, [expandedStatus, totalModalPages])
+
+  function openStatusModal(status) {
+    setExpandedStatus(status)
+    setExpandedPage(1)
+  }
+
+  function closeStatusModal() {
+    setExpandedStatus(null)
+    setExpandedPage(1)
+  }
+
+  function goToPreviousModalPage() {
+    setExpandedPage((previous) => Math.max(1, previous - 1))
+  }
+
+  function goToNextModalPage() {
+    if (!totalModalPages) {
+      return
+    }
+
+    setExpandedPage((previous) => Math.min(totalModalPages, previous + 1))
+  }
+
   const renderColumn = (status) => {
+    const columnJobs = jobsByStatus[status] ?? []
+    const visibleJobs = columnJobs.slice(0, 3)
+    const remainingJobs = columnJobs.length - visibleJobs.length
+
     return (
       <div
         className={`board-column ${activeDropStatus === status ? 'board-column--active' : ''}`}
@@ -119,13 +184,23 @@ function App() {
         onDragLeave={(event) => handleDragLeave(event, status)}
       >
         <header className="column-header">
-          <div>
+          <div className="column-header__info">
             <h3>{status}</h3>
-            <span className="column-count">{jobsByStatus[status]?.length ?? 0} jobs</span>
+            <span className="column-count">{columnJobs.length} jobs</span>
           </div>
+          {remainingJobs > 0 && (
+            <button
+              type="button"
+              className="column-more-button"
+              onClick={() => openStatusModal(status)}
+              aria-label={`View ${remainingJobs} more job applications in ${status}`}
+            >
+              +{remainingJobs}
+            </button>
+          )}
         </header>
         <div className="column-content">
-          {(jobsByStatus[status] ?? []).map((job) => (
+          {visibleJobs.map((job) => (
             <article
               className={`job-card ${draggedJobId === job.id ? 'job-card--dragging' : ''}`}
               draggable
@@ -168,7 +243,7 @@ function App() {
               {job.notes && <p className="job-card__notes">{job.notes}</p>}
             </article>
           ))}
-          {(jobsByStatus[status] ?? []).length === 0 && (
+          {columnJobs.length === 0 && (
             <div className="empty-state">
               <p>No jobs here yet.</p>
               <span>Move a card or add a new opportunity.</span>
@@ -535,6 +610,77 @@ function App() {
               <button type="button" className="primary-button" onClick={closeSuccessModal}>
                 Back to board
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {expandedStatus && (
+        <div className="modal-backdrop" role="presentation" onClick={closeStatusModal}>
+          <div
+            className="modal modal--jobs"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="jobs-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modal__header">
+              <div>
+                <h2 id="jobs-modal-title">All {expandedStatus} jobs</h2>
+                <p className="modal__subtitle">{modalJobs.length} total applications</p>
+              </div>
+              <button type="button" className="modal__close" onClick={closeStatusModal} aria-label="Close">
+                <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                  <path
+                    d="M6.343 6.343a1 1 0 0 1 1.414 0L12 10.586l4.243-4.243a1 1 0 1 1 1.414 1.414L13.414 12l4.243 4.243a1 1 0 0 1-1.414 1.414L12 13.414l-4.243 4.243a1 1 0 0 1-1.414-1.414L10.586 12 6.343 7.757a1 1 0 0 1 0-1.414Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="modal__body modal__body--jobs">
+              <div className="modal__job-grid">
+                {paginatedModalJobs.map((job) => (
+                  <article className="job-card job-card--modal" key={job.id}>
+                    <header className="job-card__header">
+                      <div className="job-card__heading">
+                        {job.link ? (
+                          <a className="job-card__title" href={job.link} target="_blank" rel="noreferrer">
+                            {job.title}
+                          </a>
+                        ) : (
+                          <span className="job-card__title job-card__title--static">{job.title}</span>
+                        )}
+                        {job.company && <span className="job-card__company">{job.company}</span>}
+                        {job.location && <span className="job-card__location">{job.location}</span>}
+                      </div>
+                    </header>
+                    {job.notes && <p className="job-card__notes">{job.notes}</p>}
+                  </article>
+                ))}
+              </div>
+              {totalModalPages > 1 && (
+                <div className="modal__pagination">
+                  <button
+                    type="button"
+                    className="modal__pagination-button"
+                    onClick={goToPreviousModalPage}
+                    disabled={expandedPage === 1}
+                  >
+                    Previous
+                  </button>
+                  <span className="modal__page-indicator">
+                    Page {expandedPage} of {totalModalPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="modal__pagination-button"
+                    onClick={goToNextModalPage}
+                    disabled={expandedPage === totalModalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
