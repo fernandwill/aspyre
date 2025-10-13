@@ -21,7 +21,7 @@ export function SuccessModal({ message, onClose }) {
         </div>
         <h2 id="success-modal-title">{message}</h2>
         <div className="modal__actions modal__actions--center">
-          <button type="button" className="primary-button" onClick={onClose}>
+          <button type="button" className="pill-button primary-button" onClick={onClose}>
             Back to board
           </button>
         </div>

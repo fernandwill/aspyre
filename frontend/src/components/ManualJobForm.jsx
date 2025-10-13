@@ -70,10 +70,10 @@ export function ManualJobForm({ manualJob, onFieldChange, onSubmit, onClear }) {
           </div>
         </div>
         <div className="manual-form__actions">
-          <button className="ghost-button" type="reset" onClick={onClear}>
+          <button className="pill-button ghost-button" type="reset" onClick={onClear}>
             Clear
           </button>
-          <button className="primary-button" type="submit">
+          <button className="pill-button primary-button" type="submit">
             Add to tracker
           </button>
         </div>
