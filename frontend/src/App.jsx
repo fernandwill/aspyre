@@ -307,10 +307,10 @@ function App() {
           </div>
         </div>
         <div className="header-actions">
-          <Button type="button" variant="ghost" size="sm">
+          <Button type="button" variant="ghost" size="sm" className="header-link">
             Analytics
           </Button>
-          <Button type="button" size="sm">
+          <Button type="button" variant="ghost" size="sm" className="header-link">
             Sign Out
           </Button>
         </div>
