@@ -104,7 +104,7 @@ function extractFromSlug(slug) {
   }
 }
 
-function inferJobFromUrl(url) {
+function inferFromUrlStructure(url) {
   try {
     const parsedUrl = new URL(url)
     const host = parsedUrl.hostname.replace(/^www\./, '')
@@ -125,6 +125,59 @@ function inferJobFromUrl(url) {
       company: 'Unknown Company',
       location: 'Location TBD',
     }
+  }
+}
+
+function sanitizeTitle(rawTitle) {
+  if (!rawTitle) {
+    return null
+  }
+
+  const cleaned = rawTitle.replace(/\s+/g, ' ').trim()
+  return cleaned || null
+}
+
+async function inferJobFromUrl(url) {
+  const fallback = inferFromUrlStructure(url)
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      return fallback
+    }
+
+    const contentType = response.headers.get('content-type') ?? ''
+    if (!contentType.includes('text/html')) {
+      return fallback
+    }
+
+    const html = await response.text()
+    const parser = new DOMParser()
+    const document = parser.parseFromString(html, 'text/html')
+
+    const openGraphTitle = document
+      .querySelector('meta[property="og:title"]')
+      ?.getAttribute('content')
+    const twitterTitle = document
+      .querySelector('meta[name="twitter:title"]')
+      ?.getAttribute('content')
+    const documentTitle = document.querySelector('title')?.textContent
+
+    const sanitized = sanitizeTitle(openGraphTitle || twitterTitle || documentTitle)
+
+    if (!sanitized) {
+      return fallback
+    }
+
+    return {
+      ...fallback,
+      title: sanitized,
+    }
+  } catch {
+    return fallback
   }
 }
 
@@ -326,13 +379,13 @@ function App() {
     setSuccessMessage(null)
   }
 
-  function handleTrackJob(event) {
+  async function handleTrackJob(event) {
     event.preventDefault()
     if (!linkInput.trim()) return
 
     const normalizedLink = normalizeLink(linkInput)
 
-    const inferred = inferJobFromUrl(normalizedLink)
+    const inferred = await inferJobFromUrl(normalizedLink)
     const newJob = {
       id: generateId(),
       status: 'Applied',
