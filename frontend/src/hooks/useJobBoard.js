@@ -296,7 +296,8 @@ export function useJobBoard(initialJobs = []) {
       return
     }
 
-    const normalizedJobId = typeof JobId === 'string' ? Number.parseInt(jobId, 10) : jobId
+    const normalizedJobId =
+      typeof jobId === 'string' ? Number.parseInt(jobId, 10) : jobId
     if (Number.isNaN(normalizedJobId)) {
       return
     }
