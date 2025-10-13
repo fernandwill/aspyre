@@ -486,20 +486,6 @@ function App() {
         </section>
 
         <section className="board-section">
-          <div className="board-toolbar">
-            <div className="toolbar-group">
-              <label htmlFor="sort-select">Sort</label>
-              <select id="sort-select" disabled>
-                <option>Last updated (Newest)</option>
-              </select>
-            </div>
-            <div className="toolbar-group">
-              <label htmlFor="filter-select">Filter</label>
-              <select id="filter-select" disabled>
-                <option>All sources</option>
-              </select>
-            </div>
-          </div>
           <div className="board-grid board-grid--main">
             {MAIN_STATUSES.map((status) => renderColumn(status))}
           </div>
