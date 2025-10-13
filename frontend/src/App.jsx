@@ -1,34 +1,407 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useMemo, useState } from 'react'
 import './App.css'
 
+const STATUSES = [
+  'Applied',
+  'Online Assessment',
+  'Interview',
+  'Accepted',
+  'Rejected',
+]
+
+const INITIAL_JOBS = [
+  {
+    id: '1',
+    title: 'Frontend Engineer',
+    company: 'Aspyre',
+    location: 'Remote · North America',
+    link: 'https://jobs.lever.co/example/frontend-engineer',
+    status: 'Applied',
+    tags: ['React', 'Full-time'],
+    notes: 'Reached out to recruiter on LinkedIn. Waiting for response.',
+    lastUpdate: '2 days ago',
+  },
+  {
+    id: '2',
+    title: 'Product Designer',
+    company: 'Bright Labs',
+    location: 'Amsterdam, NL',
+    link: 'https://boards.greenhouse.io/example/product-designer',
+    status: 'Interview',
+    tags: ['Design System', 'Hybrid'],
+    notes: 'Second round scheduled next Tuesday.',
+    lastUpdate: '5 hours ago',
+  },
+  {
+    id: '3',
+    title: 'Data Scientist',
+    company: 'Vector Analytics',
+    location: 'Berlin, DE',
+    link: 'https://jobs.example.com/vector-analytics/data-scientist',
+    status: 'Online Assessment',
+    tags: ['Python', 'Machine Learning'],
+    notes: 'Assessment submitted, awaiting feedback.',
+    lastUpdate: '1 day ago',
+  },
+]
+
+function generateId() {
+  const cryptoApi = globalThis.crypto
+  if (cryptoApi?.randomUUID) {
+    return cryptoApi.randomUUID()
+  }
+
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+function titleCase(value) {
+  return value
+    .replace(/[-_]/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+function inferJobFromUrl(url) {
+  try {
+    const parsedUrl = new URL(url)
+    const host = parsedUrl.hostname.replace(/^www\./, '')
+    const companySegment = host.split('.')[0]
+    const company = titleCase(companySegment)
+
+    const pathSegments = parsedUrl.pathname
+      .split('/')
+      .filter(Boolean)
+      .slice(-1)
+
+    const slug = pathSegments[0] || 'New Opportunity'
+    const title = titleCase(slug)
+
+    return {
+      title: title || 'New Opportunity',
+      company: company || 'Unknown Company',
+      location: 'Location TBD',
+    }
+  } catch (error) {
+    return {
+      title: 'New Opportunity',
+      company: 'Unknown Company',
+      location: 'Location TBD',
+    }
+  }
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [jobs, setJobs] = useState(INITIAL_JOBS)
+  const [linkInput, setLinkInput] = useState('')
+  const [manualJob, setManualJob] = useState({
+    title: '',
+    company: '',
+    location: '',
+    link: '',
+    notes: '',
+    tags: '',
+  })
+
+  const jobsByStatus = useMemo(() => {
+    return STATUSES.reduce((acc, status) => {
+      acc[status] = jobs.filter((job) => job.status === status)
+      return acc
+    }, {})
+  }, [jobs])
+
+  const totalJobs = jobs.length
+
+  function handleTrackJob(event) {
+    event.preventDefault()
+    if (!linkInput.trim()) return
+
+    const cleanedLink = linkInput.trim()
+    const normalizedLink = cleanedLink.match(/^https?:\/\//i)
+      ? cleanedLink
+      : `https://${cleanedLink}`
+
+    const inferred = inferJobFromUrl(normalizedLink)
+    const newJob = {
+      id: generateId(),
+      status: 'Applied',
+      tags: ['New'],
+      notes: 'Added from URL input.',
+      lastUpdate: 'Just now',
+      link: normalizedLink,
+      ...inferred,
+    }
+
+    setJobs((previous) => [newJob, ...previous])
+    setLinkInput('')
+  }
+
+  function handleManualSubmit(event) {
+    event.preventDefault()
+    if (!manualJob.title.trim() || !manualJob.company.trim()) {
+      return
+    }
+
+    const cleanedLink = manualJob.link?.trim()
+    const normalizedLink = cleanedLink
+      ? cleanedLink.match(/^https?:\/\//i)
+        ? cleanedLink
+        : `https://${cleanedLink}`
+      : ''
+    const tags = manualJob.tags
+      ? manualJob.tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+      : []
+
+    const newJob = {
+      id: generateId(),
+      status: 'Applied',
+      tags,
+      notes: manualJob.notes?.trim() || 'Added manually.',
+      lastUpdate: 'Just now',
+      title: manualJob.title.trim(),
+      company: manualJob.company.trim(),
+      location: manualJob.location.trim(),
+      link: normalizedLink,
+    }
+
+    setJobs((previous) => [newJob, ...previous])
+    setManualJob({ title: '', company: '', location: '', link: '', notes: '', tags: '' })
+  }
+
+  function updateJobStatus(id, status) {
+    setJobs((previous) =>
+      previous.map((job) => (job.id === id ? { ...job, status, lastUpdate: 'Just now' } : job))
+    )
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="app">
+      <header className="app-header">
+        <div className="brand">
+          <div className="brand-icon">P</div>
+          <div className="brand-meta">
+            <span className="brand-name">The Rove</span>
+            <span className="brand-tag">Job Applications Dashboard</span>
+          </div>
+        </div>
+        <div className="header-actions">
+          <button className="ghost-button" type="button">
+            Analytics
+          </button>
+          <button className="primary-button" type="button">
+            Add Job Manually
+          </button>
+        </div>
+      </header>
+
+      <main className="app-main">
+        <section className="ingest-panel">
+          <div className="ingest-header">
+            <h1>Track and manage job applications automatically</h1>
+            <p>
+              Paste any job link and we will create a card with the essentials. Update the status as you
+              progress through your interview process.
+            </p>
+          </div>
+          <form className="link-form" onSubmit={handleTrackJob}>
+            <label className="sr-only" htmlFor="job-link">
+              Job URL
+            </label>
+            <input
+              id="job-link"
+              className="link-input"
+              placeholder="Paste any job link here..."
+              value={linkInput}
+              onChange={(event) => setLinkInput(event.target.value)}
+            />
+            <button className="primary-button" type="submit">
+              Track Job
+            </button>
+          </form>
+          <div className="ingest-hint">
+            <span className="hint-pill">URL Parser</span>
+            <span>
+              Works with popular boards like LinkedIn, Greenhouse, Lever, and more. We auto-fill the title and
+              company details.
+            </span>
+          </div>
+        </section>
+
+        <section className="summary-bar">
+          <div className="summary-card">
+            <span className="summary-label">Applications</span>
+            <strong className="summary-value">{totalJobs}</strong>
+          </div>
+          {STATUSES.map((status) => (
+            <div className="summary-card" key={status}>
+              <span className="summary-label">{status}</span>
+              <strong className="summary-value">{jobsByStatus[status]?.length ?? 0}</strong>
+            </div>
+          ))}
+        </section>
+
+        <section className="manual-panel">
+          <form className="manual-form" onSubmit={handleManualSubmit}>
+            <div className="manual-form__header">
+              <h2>Add a job manually</h2>
+              <p>Prefer to type the details yourself? Capture the essentials and track from the board.</p>
+            </div>
+            <div className="manual-form__grid">
+              <div className="field">
+                <label htmlFor="manual-title">Job title</label>
+                <input
+                  id="manual-title"
+                  value={manualJob.title}
+                  onChange={(event) => setManualJob((prev) => ({ ...prev, title: event.target.value }))}
+                  placeholder="e.g. Senior Backend Engineer"
+                  required
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="manual-company">Company</label>
+                <input
+                  id="manual-company"
+                  value={manualJob.company}
+                  onChange={(event) => setManualJob((prev) => ({ ...prev, company: event.target.value }))}
+                  placeholder="Company name"
+                  required
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="manual-location">Location</label>
+                <input
+                  id="manual-location"
+                  value={manualJob.location}
+                  onChange={(event) => setManualJob((prev) => ({ ...prev, location: event.target.value }))}
+                  placeholder="City, Country or Remote"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="manual-link">Job link</label>
+                <input
+                  id="manual-link"
+                  value={manualJob.link}
+                  onChange={(event) => setManualJob((prev) => ({ ...prev, link: event.target.value }))}
+                  placeholder="https://"
+                  type="url"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="manual-tags">Tags</label>
+                <input
+                  id="manual-tags"
+                  value={manualJob.tags ?? ''}
+                  onChange={(event) => setManualJob((prev) => ({ ...prev, tags: event.target.value }))}
+                  placeholder="Comma separated e.g. Remote, Contract"
+                />
+              </div>
+              <div className="field field--full">
+                <label htmlFor="manual-notes">Notes</label>
+                <textarea
+                  id="manual-notes"
+                  value={manualJob.notes ?? ''}
+                  onChange={(event) => setManualJob((prev) => ({ ...prev, notes: event.target.value }))}
+                  placeholder="Add reminders or interview prep notes"
+                  rows="2"
+                />
+              </div>
+            </div>
+            <div className="manual-form__actions">
+              <button className="ghost-button" type="reset" onClick={() => setManualJob({ title: '', company: '', location: '', link: '', notes: '', tags: '' })}>
+                Clear
+              </button>
+              <button className="primary-button" type="submit">
+                Add to tracker
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section className="board-section">
+          <div className="board-toolbar">
+            <div className="toolbar-group">
+              <label htmlFor="sort-select">Sort</label>
+              <select id="sort-select" disabled>
+                <option>Last updated (Newest)</option>
+              </select>
+            </div>
+            <div className="toolbar-group">
+              <label htmlFor="filter-select">Filter</label>
+              <select id="filter-select" disabled>
+                <option>All sources</option>
+              </select>
+            </div>
+          </div>
+          <div className="board-columns">
+            {STATUSES.map((status) => (
+              <div className="board-column" key={status}>
+                <header className="column-header">
+                  <div>
+                    <h3>{status}</h3>
+                    <span className="column-count">{jobsByStatus[status]?.length ?? 0} jobs</span>
+                  </div>
+                  <span className="status-badge">{status.split(' ')[0]}</span>
+                </header>
+                <div className="column-content">
+                  {(jobsByStatus[status] ?? []).map((job) => (
+                    <article className="job-card" key={job.id}>
+                      <div className="job-card__top">
+                        <div className="job-card__title">
+                          <h4>{job.title}</h4>
+                          <a href={job.link} target="_blank" rel="noreferrer">
+                            View listing
+                          </a>
+                        </div>
+                        <select
+                          value={job.status}
+                          onChange={(event) => updateJobStatus(job.id, event.target.value)}
+                        >
+                          {STATUSES.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="job-card__meta">
+                        <span>{job.company}</span>
+                        {job.location && <span>• {job.location}</span>}
+                      </div>
+                      {job.tags?.length > 0 && (
+                        <div className="job-card__tags">
+                          {job.tags.map((tag) => (
+                            <span className="tag" key={tag}>
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {job.notes && <p className="job-card__notes">{job.notes}</p>}
+                      <footer className="job-card__footer">
+                        <span className="updated">Updated {job.lastUpdate}</span>
+                        <button className="ghost-button" type="button">
+                          Add note
+                        </button>
+                      </footer>
+                    </article>
+                  ))}
+                  {(jobsByStatus[status] ?? []).length === 0 && (
+                    <div className="empty-state">
+                      <p>No jobs here yet.</p>
+                      <span>Move a card or add a new opportunity.</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </div>
   )
 }
 
