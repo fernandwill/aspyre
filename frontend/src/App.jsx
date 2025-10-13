@@ -301,10 +301,6 @@ function App() {
           <div className="brand-icon">
             <img src={aspyreLogo} alt="Aspyre logo" />
           </div>
-          <div className="brand-meta">
-            <span className="brand-name">Aspyre</span>
-            <span className="brand-tag">Job Applications Dashboard</span>
-          </div>
         </div>
         <div className="header-actions">
           <Button type="button" variant="ghost" size="sm" className="header-link">
