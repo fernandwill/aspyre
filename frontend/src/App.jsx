@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import './App.css'
 import { Button } from './components/ui/button'
+import aspyreLogo from './assets/aspyre-icon.svg'
 
 const STATUSES = [
   'Applied',
@@ -297,9 +298,11 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="brand">
-          <div className="brand-icon">P</div>
+          <div className="brand-icon">
+            <img src={aspyreLogo} alt="Aspyre logo" />
+          </div>
           <div className="brand-meta">
-            <span className="brand-name">The Rove</span>
+            <span className="brand-name">Aspyre</span>
             <span className="brand-tag">Job Applications Dashboard</span>
           </div>
         </div>
