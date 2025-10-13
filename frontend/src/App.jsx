@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import './App.css'
+import { Button } from './components/ui/button'
 
 const STATUSES = [
   'Applied',
@@ -20,7 +21,6 @@ const INITIAL_JOBS = [
     location: 'Remote · North America',
     link: 'https://jobs.lever.co/example/frontend-engineer',
     status: 'Applied',
-    tags: ['React', 'Full-time'],
     notes: 'Reached out to recruiter on LinkedIn. Waiting for response.',
     lastUpdate: '2 days ago',
   },
@@ -31,7 +31,6 @@ const INITIAL_JOBS = [
     location: 'Amsterdam, NL',
     link: 'https://boards.greenhouse.io/example/product-designer',
     status: 'Interview',
-    tags: ['Design System', 'Hybrid'],
     notes: 'Second round scheduled next Tuesday.',
     lastUpdate: '5 hours ago',
   },
@@ -42,7 +41,6 @@ const INITIAL_JOBS = [
     location: 'Berlin, DE',
     link: 'https://jobs.example.com/vector-analytics/data-scientist',
     status: 'Online Assessment',
-    tags: ['Python', 'Machine Learning'],
     notes: 'Assessment submitted, awaiting feedback.',
     lastUpdate: '1 day ago',
   },
@@ -104,7 +102,6 @@ function App() {
     location: '',
     link: '',
     notes: '',
-    tags: '',
   })
 
   const [draggedJobId, setDraggedJobId] = useState(null)
@@ -158,9 +155,9 @@ function App() {
               {job.notes && <p className="job-card__notes">{job.notes}</p>}
               <footer className="job-card__footer">
                 <span className="updated">Updated {job.lastUpdate}</span>
-                <button className="ghost-button" type="button">
-                  Add note
-                </button>
+                <Button type="button" variant="outline" size="sm">
+                  Edit
+                </Button>
               </footer>
             </article>
           ))}
@@ -188,7 +185,6 @@ function App() {
     const newJob = {
       id: generateId(),
       status: 'Applied',
-      tags: ['New'],
       notes: 'Added from URL input.',
       lastUpdate: 'Just now',
       link: normalizedLink,
@@ -211,17 +207,10 @@ function App() {
         ? cleanedLink
         : `https://${cleanedLink}`
       : ''
-    const tags = manualJob.tags
-      ? manualJob.tags
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter(Boolean)
-      : []
 
     const newJob = {
       id: generateId(),
       status: 'Applied',
-      tags,
       notes: manualJob.notes?.trim() || 'Added manually.',
       lastUpdate: 'Just now',
       title: manualJob.title.trim(),
@@ -231,7 +220,7 @@ function App() {
     }
 
     setJobs((previous) => [newJob, ...previous])
-    setManualJob({ title: '', company: '', location: '', link: '', notes: '', tags: '' })
+    setManualJob({ title: '', company: '', location: '', link: '', notes: '' })
   }
 
   function updateJobStatus(id, status) {
@@ -388,15 +377,6 @@ function App() {
                   type="url"
                 />
               </div>
-              <div className="field">
-                <label htmlFor="manual-tags">Tags</label>
-                <input
-                  id="manual-tags"
-                  value={manualJob.tags ?? ''}
-                  onChange={(event) => setManualJob((prev) => ({ ...prev, tags: event.target.value }))}
-                  placeholder="Comma separated e.g. Remote, Contract"
-                />
-              </div>
               <div className="field field--full">
                 <label htmlFor="manual-notes">Notes</label>
                 <textarea
@@ -409,7 +389,11 @@ function App() {
               </div>
             </div>
             <div className="manual-form__actions">
-              <button className="ghost-button" type="reset" onClick={() => setManualJob({ title: '', company: '', location: '', link: '', notes: '', tags: '' })}>
+              <button
+                className="ghost-button"
+                type="reset"
+                onClick={() => setManualJob({ title: '', company: '', location: '', link: '', notes: '' })}
+              >
                 Clear
               </button>
               <button className="primary-button" type="submit">
