@@ -53,6 +53,13 @@ function generateId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
+const SPECIAL_HOST_COMPANIES = {
+  linkedin: 'LinkedIn',
+  jobstreet: 'JobStreet',
+  indeed: 'Indeed',
+  glassdoor: 'Glassdoor',
+}
+
 function titleCase(value) {
   return value
     .replace(/[-_]/g, ' ')
@@ -62,24 +69,54 @@ function titleCase(value) {
     .join(' ')
 }
 
+function normalizeCompanyFromHost(hostname) {
+  const companySegment = hostname.split('.')[0]
+
+  if (SPECIAL_HOST_COMPANIES[companySegment]) {
+    return SPECIAL_HOST_COMPANIES[companySegment]
+  }
+
+  return titleCase(companySegment)
+}
+
+function extractFromSlug(slug) {
+  if (!slug) {
+    return { title: null, company: null }
+  }
+
+  const cleanedSlug = slug.replace(/\d+$/, '').replace(/-+/g, '-').replace(/^-|-$/g, '')
+
+  if (!cleanedSlug) {
+    return { title: null, company: null }
+  }
+
+  if (cleanedSlug.includes('-at-')) {
+    const [titlePart, companyPart] = cleanedSlug.split('-at-')
+    return {
+      title: titleCase(titlePart),
+      company: titleCase(companyPart),
+    }
+  }
+
+  return {
+    title: titleCase(cleanedSlug),
+    company: null,
+  }
+}
+
 function inferJobFromUrl(url) {
   try {
     const parsedUrl = new URL(url)
     const host = parsedUrl.hostname.replace(/^www\./, '')
-    const companySegment = host.split('.')[0]
-    const company = titleCase(companySegment)
+    const company = normalizeCompanyFromHost(host)
 
-    const pathSegments = parsedUrl.pathname
-      .split('/')
-      .filter(Boolean)
-      .slice(-1)
-
-    const slug = pathSegments[0] || 'New Opportunity'
-    const title = titleCase(slug)
+    const pathSegments = parsedUrl.pathname.split('/').filter(Boolean)
+    const slugCandidate = [...pathSegments].reverse().find((segment) => /[a-zA-Z]/.test(segment))
+    const { title: inferredTitle, company: inferredCompany } = extractFromSlug(slugCandidate)
 
     return {
-      title: title || 'New Opportunity',
-      company: company || 'Unknown Company',
+      title: inferredTitle || 'New Opportunity',
+      company: inferredCompany || company || 'Unknown Company',
       location: 'Location TBD',
     }
   } catch {
