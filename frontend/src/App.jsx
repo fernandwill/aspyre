@@ -104,14 +104,15 @@ function App() {
     tags: '',
   })
 
+  const [draggedJobId, setDraggedJobId] = useState(null)
+  const [activeDropStatus, setActiveDropStatus] = useState(null)
+
   const jobsByStatus = useMemo(() => {
     return STATUSES.reduce((acc, status) => {
       acc[status] = jobs.filter((job) => job.status === status)
       return acc
     }, {})
   }, [jobs])
-
-  const totalJobs = jobs.length
 
   function handleTrackJob(event) {
     event.preventDefault()
@@ -178,6 +179,55 @@ function App() {
     )
   }
 
+  function handleDragStart(event, jobId) {
+    setDraggedJobId(jobId)
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', jobId)
+  }
+
+  function handleDragEnd() {
+    setDraggedJobId(null)
+    setActiveDropStatus(null)
+  }
+
+  function handleDragEnter(status) {
+    setActiveDropStatus(status)
+  }
+
+  function handleDragLeave(event, status) {
+    if (event.currentTarget.contains(event.relatedTarget)) {
+      return
+    }
+
+    if (activeDropStatus === status) {
+      setActiveDropStatus(null)
+    }
+  }
+
+  function handleDragOver(event) {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+  }
+
+  function handleDrop(event, status) {
+    event.preventDefault()
+    const jobId = draggedJobId ?? event.dataTransfer.getData('text/plain')
+    setActiveDropStatus(null)
+
+    if (!jobId) {
+      return
+    }
+
+    setDraggedJobId(null)
+
+    const job = jobs.find((item) => item.id === jobId)
+    if (!job || job.status === status) {
+      return
+    }
+
+    updateJobStatus(jobId, status)
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -229,19 +279,6 @@ function App() {
               company details.
             </span>
           </div>
-        </section>
-
-        <section className="summary-bar">
-          <div className="summary-card">
-            <span className="summary-label">Applications</span>
-            <strong className="summary-value">{totalJobs}</strong>
-          </div>
-          {STATUSES.map((status) => (
-            <div className="summary-card" key={status}>
-              <span className="summary-label">{status}</span>
-              <strong className="summary-value">{jobsByStatus[status]?.length ?? 0}</strong>
-            </div>
-          ))}
         </section>
 
         <section className="manual-panel">
@@ -338,17 +375,31 @@ function App() {
           </div>
           <div className="board-columns">
             {STATUSES.map((status) => (
-              <div className="board-column" key={status}>
+              <div
+                className={`board-column ${
+                  activeDropStatus === status ? 'board-column--active' : ''
+                }`}
+                key={status}
+                onDragOver={handleDragOver}
+                onDrop={(event) => handleDrop(event, status)}
+                onDragEnter={() => handleDragEnter(status)}
+                onDragLeave={(event) => handleDragLeave(event, status)}
+              >
                 <header className="column-header">
                   <div>
                     <h3>{status}</h3>
                     <span className="column-count">{jobsByStatus[status]?.length ?? 0} jobs</span>
                   </div>
-                  <span className="status-badge">{status.split(' ')[0]}</span>
                 </header>
                 <div className="column-content">
                   {(jobsByStatus[status] ?? []).map((job) => (
-                    <article className="job-card" key={job.id}>
+                    <article
+                      className={`job-card ${draggedJobId === job.id ? 'job-card--dragging' : ''}`}
+                      draggable
+                      key={job.id}
+                      onDragStart={(event) => handleDragStart(event, job.id)}
+                      onDragEnd={handleDragEnd}
+                    >
                       <header className="job-card__header">
                         <div className="job-card__heading">
                           {job.link ? (
@@ -361,16 +412,6 @@ function App() {
                           {job.company && <span className="job-card__company">{job.company}</span>}
                           {job.location && <span className="job-card__location">{job.location}</span>}
                         </div>
-                        <select
-                          value={job.status}
-                          onChange={(event) => updateJobStatus(job.id, event.target.value)}
-                        >
-                          {STATUSES.map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
                       </header>
                       {job.notes && <p className="job-card__notes">{job.notes}</p>}
                       <footer className="job-card__footer">
