@@ -115,6 +115,7 @@ function App() {
     link: '',
     notes: '',
   })
+  const [showUpdateSuccess, setShowUpdateSuccess] = useState(false)
 
   const jobsByStatus = useMemo(() => {
     return STATUSES.reduce((acc, status) => {
@@ -262,6 +263,11 @@ function App() {
     )
 
     closeEditModal()
+    setShowUpdateSuccess(true)
+  }
+
+  function closeSuccessModal() {
+    setShowUpdateSuccess(false)
   }
 
   function handleTrackJob(event) {
@@ -569,6 +575,58 @@ function App() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {showUpdateSuccess && (
+        <div className="modal-backdrop" role="presentation" onClick={closeSuccessModal}>
+          <div
+            className="modal modal--success"
+            role="alertdialog"
+            aria-live="assertive"
+            aria-modal="true"
+            aria-labelledby="update-success-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modal__success-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <circle cx="12" cy="12" r="11" />
+                <path d="M9.5 12.5l1.8 1.8 3.7-3.8" />
+              </svg>
+            </div>
+            <h2 id="update-success-title">Job application updated.</h2>
+            <p className="modal__success-subtitle">Your changes were saved and the board is ready with the latest details.</p>
+            <ul className="success-checklist">
+              <li>
+                <span className="success-checklist__icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" focusable="false">
+                    <path d="M16.667 4.167L7.5 13.333l-4.167-4.166" />
+                  </svg>
+                </span>
+                <span>Updated card details reflect immediately on your board.</span>
+              </li>
+              <li>
+                <span className="success-checklist__icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" focusable="false">
+                    <path d="M16.667 4.167L7.5 13.333l-4.167-4.166" />
+                  </svg>
+                </span>
+                <span>Timeline marked as &ldquo;Just now&rdquo; for quick reference.</span>
+              </li>
+              <li>
+                <span className="success-checklist__icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" focusable="false">
+                    <path d="M16.667 4.167L7.5 13.333l-4.167-4.166" />
+                  </svg>
+                </span>
+                <span>Revisit the card anytime to adjust status or notes.</span>
+              </li>
+            </ul>
+            <div className="modal__actions modal__actions--center">
+              <button type="button" className="primary-button" onClick={closeSuccessModal}>
+                Back to board
+              </button>
+            </div>
           </div>
         </div>
       )}
