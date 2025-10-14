@@ -296,12 +296,17 @@ export function useJobBoard(initialJobs = []) {
       return
     }
 
+    const normalizedJobId = typeof JobId === 'string' ? Number.parseInt(jobId, 10) : jobId
+    if (Number.isNaN(normalizedJobId)) {
+      return
+    }
+
     let originalJob = null
     let didChange = false
 
     setJobs((previous) =>
       previous.map((job) => {
-        if (job.id !== jobId) {
+        if (job.id !== normalizedJobId) {
           return job
         }
 
@@ -323,7 +328,7 @@ export function useJobBoard(initialJobs = []) {
     }
 
     try {
-      const updatedJob = await updateJobStatusRequest(jobId, status)
+      const updatedJob = await updateJobStatusRequest(normalizedJobId, status)
       if (!isMounted()) {
         return
       }
