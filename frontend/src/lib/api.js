@@ -1,4 +1,18 @@
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+const defaultApiUrl = (() => {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+
+  const {protocol, hostname} = window.location
+
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${protocol}//${hostname}:8000/api`
+  }
+
+  return ''
+})()
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || defaultApiUrl).replace(/\/$/, '')
 
 async function request(path, options = {}) {
   const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`
