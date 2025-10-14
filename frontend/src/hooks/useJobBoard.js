@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { INITIAL_JOBS, JOBS_PER_MODAL_PAGE, STATUSES } from '../lib/jobBoard'
+import { JOBS_PER_MODAL_PAGE, STATUSES } from '../lib/jobBoard'
 import { generateId, normalizeLink } from '../lib/jobUtils'
 
 const EMPTY_MANUAL_JOB = { title: '', company: '', location: '', link: '', notes: '' }
@@ -31,7 +31,7 @@ function hasEditChanges(editForm, job) {
   return titleChanged || companyChanged || locationChanged || notesChanged || linkChanged
 }
 
-export function useJobBoard(initialJobs = INITIAL_JOBS) {
+export function useJobBoard(initialJobs = []) {
   const [jobs, setJobs] = useState(initialJobs)
   const [manualJob, setManualJob] = useState(EMPTY_MANUAL_JOB)
   const [draggedJobId, setDraggedJobId] = useState(null)
