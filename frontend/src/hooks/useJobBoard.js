@@ -302,31 +302,32 @@ export function useJobBoard(initialJobs = []) {
       return
     }
 
-    let originalJob = null
-    let didChange = false
+    const existingJob = jobs.find((job) => {
+      const jobIdNumber =
+        typeof job.id === 'number' ? job.id : Number.parseInt(job.id, 10)
+      return !Number.isNaN(jobIdNumber) && jobIdNumber === normalizedJobId
+    })
+
+    if (!existingJob || existingJob.status === status) {
+      return
+    }
+
+    const optimisticJob = {
+      ...existingJob,
+      status,
+    }
 
     setJobs((previous) =>
       previous.map((job) => {
-        if (job.id !== normalizedJobId) {
+        const jobIdNumber =
+          typeof job.id === 'number' ? job.id : Number.parseInt(job.id, 10)
+        if (Number.isNaN(jobIdNumber) || jobIdNumber !== normalizedJobId) {
           return job
         }
 
-        originalJob = job
-        if (job.status === status) {
-          return job
-        }
-
-        didChange = true
-        return {
-          ...job,
-          status,
-        }
+        return optimisticJob
       })
     )
-
-    if (!didChange || !originalJob) {
-      return
-    }
 
     try {
       const updatedJob = await updateJobStatusRequest(normalizedJobId, status)
@@ -345,11 +346,13 @@ export function useJobBoard(initialJobs = []) {
       }
 
       setJobs((previous) =>
-        previous.map((job) => (job.id === originalJob.id ? originalJob : job))
+        previous.map((job) => (job.id === existingJob.id ? existingJob : job))
       )
       setErrorMessage(error.body?.message || 'Unable to update job status. Please try again.')
     }
-  }, [isMounted])
+  // Depend on `jobs` so we always inspect the freshest data set; without this the memoized
+  // callback may miss the dragged job and skip the status update entirely.
+  }, [isMounted, jobs])
 
   // Begin tracking a drag interaction for a job card.
   const handleDragStart = useCallback((event, jobId) => {
