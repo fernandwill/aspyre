@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react'
 import './App.css'
 import aspyreLogo from './assets/aspyre-icon.svg'
 import { JobColumn } from './components/JobColumn'
@@ -9,11 +10,13 @@ import { JobsModal } from './components/JobsModal'
 import { Button } from './components/ui/button'
 import { useJobBoard } from './hooks/useJobBoard'
 import { MAIN_STATUSES, OUTCOME_STATUSES } from './lib/jobBoard'
+import { signOut } from './lib/api'
 
 /**
  * Render the Aspyre job tracking board and wire up all interactions.
  */
 function App() {
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const {
     jobsByStatus,
     manualJob,
@@ -55,6 +58,31 @@ function App() {
     goToNextModalPage,
   } = useJobBoard()
 
+  const handleSignOut = useCallback(async () => {
+    if (isSigningOut) {
+      return
+    }
+
+    setIsSigningOut(true)
+
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Failed to shut down the application during sign out', error)
+    } finally {
+      if (typeof window !== 'undefined') {
+        window.open('', '_self')
+        window.close()
+
+        setTimeout(() => {
+          if (!window.closed) {
+            window.location.replace('about:blank')
+          }
+        }, 150)
+      }
+    }
+  }, [isSigningOut])
+
   return (
     <div className="app">
       <header className="app-header">
@@ -67,8 +95,15 @@ function App() {
           <Button type="button" variant="ghost" size="sm" className="header-link">
             Analytics
           </Button>
-          <Button type="button" variant="ghost" size="sm" className="header-link">
-            Sign Out
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="header-link"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+          >
+            {isSigningOut ? 'Signing Out…' : 'Sign Out'}
           </Button>
         </div>
       </header>

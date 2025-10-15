@@ -105,3 +105,12 @@ export function deleteJobApplication(jobId) {
     method: 'DELETE',
   })
 }
+
+/**
+ * Terminate the running application and associated services.
+ */
+export function signOut() {
+  return request('/sign-out', {
+    method: 'POST',
+  })
+}
