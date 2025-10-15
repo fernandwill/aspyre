@@ -2,6 +2,7 @@ import './App.css'
 import aspyreLogo from './assets/aspyre-icon.svg'
 import { JobColumn } from './components/JobColumn'
 import { ManualJobForm } from './components/ManualJobForm'
+import { StatusPieChart } from './components/StatusPieChart'
 import { EditJobModal } from './components/EditJobModal'
 import { SuccessModal } from './components/SuccessModal'
 import { JobsModal } from './components/JobsModal'
@@ -89,13 +90,17 @@ function App() {
           </div>
         )}
 
-        <ManualJobForm
-          manualJob={manualJob}
-          onFieldChange={updateManualJob}
-          onSubmit={handleManualSubmit}
-          onClear={resetManualJob}
-          isSubmitting={isCreating}
-        />
+        <div className="overview-grid">
+          <ManualJobForm
+            manualJob={manualJob}
+            onFieldChange={updateManualJob}
+            onSubmit={handleManualSubmit}
+            onClear={resetManualJob}
+            isSubmitting={isCreating}
+          />
+
+          <StatusPieChart jobsByStatus={jobsByStatus} />
+        </div>
 
         {isLoading && (
           <div className="loading-state" role="status" aria-live="polite">
