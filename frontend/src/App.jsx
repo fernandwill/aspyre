@@ -31,6 +31,7 @@ function App() {
     handleDragLeave,
     handleDragOver,
     handleDrop,
+    handleStatusChange,
     handleEditJob,
     editingJob,
     editForm,
@@ -213,6 +214,7 @@ function App() {
         onClose={closeStatusModal}
         onNextPage={goToNextModalPage}
         onPreviousPage={goToPreviousModalPage}
+        onChangeStatus={handleStatusChange}
       />
     </div>
   )

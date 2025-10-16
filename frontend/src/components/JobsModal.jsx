@@ -1,3 +1,10 @@
+import { useEffect, useState } from 'react'
+import { STATUSES } from '../lib/jobBoard'
+
+const TARGET_STATUSES = ['Interview', 'Online Assessment', 'Rejected', 'Accepted'].filter((status) =>
+  STATUSES.includes(status)
+)
+
 /**
  * Display a modal listing all jobs in a specific status with pagination.
  */
@@ -10,9 +17,27 @@ export function JobsModal({
   onClose,
   onNextPage,
   onPreviousPage,
+  onChangeStatus,
 }) {
   if (!status) {
     return null
+  }
+
+  const [expandedJobId, setExpandedJobId] = useState(null)
+
+  useEffect(() => {
+    setExpandedJobId(null)
+  }, [status, page])
+
+  const handleCardClick = (jobId) => {
+    setExpandedJobId((current) => (current === jobId ? null : jobId))
+  }
+
+  const handleStatusSelect = (jobId, nextStatus) => {
+    if (typeof onChangeStatus === 'function') {
+      onChangeStatus(jobId, nextStatus)
+    }
+    setExpandedJobId(null)
   }
 
   return (
@@ -41,11 +66,21 @@ export function JobsModal({
         <div className="modal__body modal__body--jobs">
           <div className="modal__job-grid">
             {paginatedJobs.map((job) => (
-              <article className="job-card job-card--modal" key={job.id}>
+              <article
+                className="job-card job-card--modal"
+                key={job.id}
+                onClick={() => handleCardClick(job.id)}
+              >
                 <header className="job-card__header">
                   <div className="job-card__heading">
                     {job.link ? (
-                      <a className="job-card__title" href={job.link} target="_blank" rel="noreferrer">
+                      <a
+                        className="job-card__title"
+                        href={job.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         {job.title}
                       </a>
                     ) : (
@@ -56,6 +91,26 @@ export function JobsModal({
                   </div>
                 </header>
                 {job.notes && <p className="job-card__notes">{job.notes}</p>}
+                {expandedJobId === job.id && (
+                  <div className="job-card__menu" onClick={(event) => event.stopPropagation()}>
+                    <p className="job-card__menu-label">Move to…</p>
+                    <div className="job-card__menu-options">
+                      {TARGET_STATUSES.map((targetStatus) => (
+                        <button
+                          key={targetStatus}
+                          type="button"
+                          className="job-card__menu-option"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handleStatusSelect(job.id, targetStatus)
+                          }}
+                        >
+                          {targetStatus}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </article>
             ))}
           </div>
