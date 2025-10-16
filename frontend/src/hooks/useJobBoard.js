@@ -423,6 +423,7 @@ export function useJobBoard(initialJobs = []) {
     handleDragLeave,
     handleDragOver,
     handleDrop,
+    handleStatusChange,
     handleEditJob,
     editingJob,
     editForm,
