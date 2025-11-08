@@ -19,10 +19,6 @@ export function JobsModal({
   onPreviousPage,
   onChangeStatus,
 }) {
-  if (!status) {
-    return null
-  }
-
   const [expandedJobId, setExpandedJobId] = useState(null)
 
   useEffect(() => {
@@ -38,6 +34,10 @@ export function JobsModal({
       onChangeStatus(jobId, nextStatus)
     }
     setExpandedJobId(null)
+  }
+
+  if (!status) {
+    return null
   }
 
   return (
