@@ -1,7 +1,14 @@
 /**
  * Render the manual entry form for adding a new job application to the board.
  */
-export function ManualJobForm({ manualJob, onFieldChange, onSubmit, onClear, isSubmitting = false }) {
+export function ManualJobForm({
+  manualJob,
+  onFieldChange,
+  onSubmit,
+  onClear,
+  isSubmitting = false,
+  jobsAppliedToday = 0,
+}) {
   return (
     <section className="manual-panel">
       <form className="manual-form" onSubmit={onSubmit} aria-busy={isSubmitting}>
@@ -78,12 +85,20 @@ export function ManualJobForm({ manualJob, onFieldChange, onSubmit, onClear, isS
           </div>
         </div>
         <div className="manual-form__actions">
-          <button className="pill-button ghost-button" type="reset" onClick={onClear} disabled={isSubmitting}>
-            Clear
-          </button>
-          <button className="pill-button primary-button" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Adding…' : 'Add to tracker'}
-          </button>
+          <div className="manual-form__actions-buttons">
+            <button className="pill-button ghost-button" type="reset" onClick={onClear} disabled={isSubmitting}>
+              Clear
+            </button>
+            <button className="pill-button primary-button" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Adding…' : 'Add to tracker'}
+            </button>
+          </div>
+          <p className="manual-form__meta manual-form__meta--footer" aria-live="polite">
+            Jobs applied today:{' '}
+            <span className="manual-form__count" aria-atomic="true">
+              {jobsAppliedToday}
+            </span>
+          </p>
         </div>
       </form>
     </section>

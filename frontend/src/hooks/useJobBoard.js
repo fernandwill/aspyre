@@ -120,6 +120,32 @@ export function useJobBoard(initialJobs = []) {
     }, {})
   }, [jobs])
 
+  const jobsAppliedToday = useMemo(() => {
+    const today = new Date()
+    const todayYear = today.getFullYear()
+    const todayMonth = today.getMonth()
+    const todayDate = today.getDate()
+
+    return jobs.reduce((count, job) => {
+      const createdAt = job?.created_at ?? job?.createdAt
+      if (!createdAt) {
+        return count
+      }
+
+      const createdDate = new Date(createdAt)
+      if (
+        Number.isNaN(createdDate.valueOf()) ||
+        createdDate.getFullYear() !== todayYear ||
+        createdDate.getMonth() !== todayMonth ||
+        createdDate.getDate() !== todayDate
+      ) {
+        return count
+      }
+
+      return count + 1
+    }, 0)
+  }, [jobs])
+
   const modalControls = useModalPagination(jobsByStatus)
 
   // Track whether the edit form has diverged from the persisted job data.
@@ -411,6 +437,7 @@ export function useJobBoard(initialJobs = []) {
 
   return {
     jobsByStatus,
+    jobsAppliedToday,
     manualJob,
     updateManualJob,
     resetManualJob,

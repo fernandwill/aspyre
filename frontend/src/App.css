@@ -638,8 +638,21 @@
 
 .manual-form__actions {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.manual-form__actions-buttons {
+  display: flex;
   justify-content: flex-end;
   gap: 1rem;
+}
+
+.manual-form__meta--footer {
+  font-size: 0.95rem;
+  color: #4f4f4f;
+  margin: 0;
 }
 
 .board-divider {
@@ -1091,6 +1104,10 @@
   .manual-form__actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .manual-form__actions-buttons {
+    flex-direction: column;
   }
 
   .manual-form__actions button {

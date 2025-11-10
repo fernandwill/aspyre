@@ -19,6 +19,7 @@ function App() {
   const [isSigningOut, setIsSigningOut] = useState(false)
   const {
     jobsByStatus,
+    jobsAppliedToday,
     manualJob,
     updateManualJob,
     resetManualJob,
@@ -133,6 +134,7 @@ function App() {
             onSubmit={handleManualSubmit}
             onClear={resetManualJob}
             isSubmitting={isCreating}
+            jobsAppliedToday={jobsAppliedToday}
           />
 
           <StatusPieChart jobsByStatus={jobsByStatus} />
